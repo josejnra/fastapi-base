@@ -1,0 +1,24 @@
+{
+  "devDependencies": {
+    "@apidevtools/swagger-cli": "^4.0.4",
+    "@commitlint/cli": "^16.3.0",
+    "@commitlint/config-conventional": "^16.2.4",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^7.0.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "scripts": {
+    "freeze": "poetry export --without-hashes -o requirements.txt",
+    "freeze-dev": "poetry export --without-hashes --dev -E dev_types -o requirements.txt",
+    "thaw": "poetry install --all-extras",
+    "app": "uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "test": "clear && poetry run pytest --cov --cov-branch --cov=app/",
+    "test-cov": "clear && poetry run pytest --cov --cov-report xml:coverage.xml --cov-branch --cov=app/",
+    "validate-swagger-json": "swagger-cli validate app/my-api-project.openapi.json ",
+    "prep": "clear && poetry run black . && poetry run isort . && poetry run flake8 . && poetry run pre-commit run --all-files"
+  }
+}
