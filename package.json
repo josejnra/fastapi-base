@@ -19,6 +19,6 @@
     "test": "clear && poetry run pytest --cov --cov-branch --cov=app/",
     "test-cov": "clear && poetry run pytest --cov --cov-report xml:coverage.xml --cov-branch --cov=app/",
     "validate-swagger-json": "swagger-cli validate app/my-api-project.openapi.json ",
-    "prep": "clear && poetry run black . && poetry run isort . && poetry run flake8 . && poetry run pre-commit run --all-files"
+    "prep": "clear && poetry run black . && poetry run isort . && poetry run flake8 app tests"
   }
 }
