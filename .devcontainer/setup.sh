@@ -28,8 +28,7 @@ npm install --save-dev @apidevtools/swagger-cli
 
 npm install
 
-# set envs creation in-project
-poetry config virtualenvs.in-project true
-
 # create poetry env and install deps
 npm run thaw
+
+npm run update

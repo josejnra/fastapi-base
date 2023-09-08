@@ -15,6 +15,7 @@
     "freeze": "poetry export --without-hashes -o requirements.txt",
     "freeze-dev": "poetry export --without-hashes --dev -E dev_types -o requirements.txt",
     "thaw": "poetry install --all-extras",
+    "update": "poetry update",
     "app": "uvicorn app.main:app --host 0.0.0.0 --port 8000",
     "test": "clear && poetry run pytest --cov --cov-branch --cov=app/",
     "test-cov": "clear && poetry run pytest --cov --cov-report xml:coverage.xml --cov-branch --cov=app/",

@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    image: fastapi-base:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    ports:
+      - 8000:8000
+    volumes:
+      - ./app:/code/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  database:
+    image: postgres:15.3
+    container_name: database
+    volumes:
+      - ./volumes/postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+  omnidb:
+    platform: linux/amd64 # for apple processors
+    image: omnidbteam/omnidb:3.0.3b
+    container_name: omnidb
+    depends_on:
+      - database
+    ports:
+      - 8001:8000
+    volumes: 
+      - ./volumes/omnidb_server:/home/omnidb/.omnidb/omnidb-server
+
+    # docker exec -it omnidb python omnidb-server.py --createsuperuser=user pass
