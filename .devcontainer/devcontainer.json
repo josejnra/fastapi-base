@@ -50,22 +50,17 @@
 						"args": ["shell"]
 					}
 				},
-				// "terminal.integrated.defaultProfile.linux": "poetry-shell",  # spawns a terminal on top of sh 
-                "python.defaultInterpreterPath": "/workspaces/fastapi-base/.venv/bin/python",
-				"mypy.dmypyExecutable": "/workspaces/fastapi-base/.venv/bin/dmypy",
-				"mypy-type-checker.path": ["/workspaces/fastapi-base/.venv/bin/mypy"],
-				"python.testing.pytestPath": "/workspaces/fastapi-base/.venv/bin/pytest",
-				"flake8.interpreter": ["/workspaces/fastapi-base/.venv/bin/flake8"],
-				"flake8.path": ["/workspaces/fastapi-base/.venv/bin/flake8"],
+				// "terminal.integrated.defaultProfile.linux": "poetry-shell",  # spawns a terminal on top of sh
 				"emeraldwalk.runonsave": {
                     "commands": [
                         {
                             "match": ".py",
                             "isAsync": false,
-                            "cmd": "npm run algo"
+                            "cmd": "echo 'auto run'"
                         }
                     ]
-                }
+                },
+				"python.analysis.typeCheckingMode": "strict"
 			}
 		}
 	},

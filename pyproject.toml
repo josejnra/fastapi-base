@@ -26,13 +26,14 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "3.12.*"
 types-python-dateutil = {version = "^2.9.0.20240316", optional = true}
 types-pytz = {version ="^2024.1.0.20240417", optional = true}
 types-PyYAML = {version = "^6.0.12.20240808", optional = true}
 fastapi = {extras = ["standard"], version = "^0.112.0"}
 uvicorn = "^0.30.6"
 pydantic-settings = "^2.4.0"
+sqlalchemy = "^2.0.32"
 
 [tool.poetry.extras]
 dev_types = ["types-python-dateutil", "types-pytz", "types-PyYAML"]
@@ -46,6 +47,8 @@ flake8 = "^7.1.1"
 black = "^24.8.0"
 mypy = "^1.11.1"
 faker = "^27.0.0"
+pyright = "^1.1.375"
+taskipy = "^1.13.0"
 
 [tool.black]
 line-length = 120
@@ -79,6 +82,15 @@ lines_between_sections = 1
 exclude = [
     ".venv"
 ]
+cache_dir = "/tmp/.mypy_cache"
+
+[tool.taskipy.tasks]
+lint = 'black . && blue --check . --diff'
+format = 'blue .  && isort .'
+run = 'fastapi dev app/main.py --port 8000'
+pre_test = 'task lint'
+test = 'pytest -s -x --cov=fast_zero -vv'
+post_test = 'coverage html'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

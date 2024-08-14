@@ -523,3 +523,4 @@ pip.conf
 requirements.txt
 volumes
 .DS_Store
+.vscode
