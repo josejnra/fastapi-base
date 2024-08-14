@@ -1,19 +1,22 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
 {
-	"name": "Ubuntu",
+	"name": "FastAPI App",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:jammy",
+	"image": "mcr.microsoft.com/devcontainers/base:noble",
 	// binding .ssh dir into dev container for fixing issue with git
 	"mounts": [
 		"source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
 	],
+
+	"runArgs": ["--name=vscode-fastapi-base"],
+
+	"remoteEnv": {
+		"PYTHONPYCACHEPREFIX": "/home/vscode/.cache/cpython/"
+	},
+
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
-		"ghcr.io/devcontainers/features/node:1": {
-			"nodeGypDependencies": true,
-			"version": "lts"
-		},
 		"ghcr.io/devcontainers-contrib/features/poetry:2": {
 			"version": "latest"
 		},
@@ -35,7 +38,9 @@
 				"emeraldwalk.RunOnSave",
 				"eamodio.gitlens",
 				"waderyan.gitblame",
-				"tamasfe.even-better-toml"
+				"tamasfe.even-better-toml",
+				"streetsidesoftware.code-spell-checker",
+				"njpwerner.autodocstring"
 			],
 			"settings": {
 				"terminal.integrated.scrollback": 10000,
