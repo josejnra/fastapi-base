@@ -1,4 +1,4 @@
-FROM python:3.10 as requirements-stage
+FROM python:3.12 as requirements-stage
 
 WORKDIR /tmp
 
@@ -8,7 +8,7 @@ COPY ./pyproject.toml ./poetry.lock* /tmp/
 
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-FROM python:3.10
+FROM python:3.12
 
 WORKDIR /code
 
@@ -21,4 +21,4 @@ RUN pip install \
 
 COPY ./app /code/app
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["fastapi", "run", "app/main.py", "--port", "8000"]

@@ -1,16 +1,18 @@
+from typing import Any
+
 from fastapi import FastAPI
 from starlette.config import Config
-from pydantic import AnyUrl, BaseSettings, PostgresDsn
-
+from pydantic import AnyUrl, PostgresDsn
+from pydantic_settings import BaseSettings
 
 config = Config(".env")  # parse .env file for env variables
 
 ENVIRONMENT = config("ENVIRONMENT")  # get current env name
 SHOW_DOCS_ENVIRONMENT = ("local", "staging")  # explicit list of allowed envs
 
-app_configs = {"title": "My Cool API"}
+app_configs: dict[str, Any] = {"title": "My Cool API"}
 if ENVIRONMENT not in SHOW_DOCS_ENVIRONMENT:
-    app_configs["openapi_url"] = None  # set url for docs as null
+    app_configs["openapi_url"]: str | None = None  # type: ignore # set url for docs as null
 
 app = FastAPI(**app_configs)
 

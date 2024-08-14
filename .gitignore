@@ -522,3 +522,4 @@ pip.conf
 # since we're using poetry we don't need to version requirements.txt
 requirements.txt
 volumes
+.DS_Store
