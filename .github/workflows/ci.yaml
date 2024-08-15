@@ -41,7 +41,7 @@ jobs:
         run: poetry run mypy .
 
       - name: Test
-        run: task test
+        run: poetry run task test
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
