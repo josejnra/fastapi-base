@@ -40,7 +40,8 @@
 				"waderyan.gitblame",
 				"tamasfe.even-better-toml",
 				"streetsidesoftware.code-spell-checker",
-				"njpwerner.autodocstring"
+				"njpwerner.autodocstring",
+				"Supermaven.supermaven"
 			],
 			"settings": {
 				"terminal.integrated.scrollback": 10000,

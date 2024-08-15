@@ -1,9 +1,9 @@
 from typing import Any
 
 from fastapi import FastAPI
-from starlette.config import Config
 from pydantic import AnyUrl, PostgresDsn
 from pydantic_settings import BaseSettings
+from starlette.config import Config
 
 config = Config(".env")  # parse .env file for env variables
 
@@ -18,7 +18,6 @@ app = FastAPI(**app_configs)
 
 
 class AppSettings(BaseSettings):
-
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
