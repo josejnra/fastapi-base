@@ -5,17 +5,22 @@ on: [ push ]
 jobs:
 
   test:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.os }} / ${{ matrix.python_version }}
+    runs-on: ${{ matrix.os }}-latest
     env:
       DOCKER_CACHE: /tmp/.buildx-cache/
       DOCKER_CACHE_ARGS: --cache-from type=local,src=$(DOCKER_CACHE) --cache-to type=local,mode=max,dest=$(DOCKER_CACHE)
     strategy:
       matrix:
+        os: [Ubuntu] # [Ubuntu, Windows, macOS]
         python-version: ["3.12"]
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install poetry
+        run: pipx install poetry
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,11 +28,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
-      - name: Install poetry
-        run: pipx install poetry
-
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
+
+       - name: Set Poetry environment
+        run: poetry env use ${{ matrix.python-version }}
 
       - name: Install Dependencies
         run: poetry install --all-extras
@@ -39,12 +44,12 @@ jobs:
         run: poetry run pytest --cov --cov=api/ --cov-branch --cov-fail-under=100
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-docker-${{ github.sha }}
