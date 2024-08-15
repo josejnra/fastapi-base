@@ -85,8 +85,8 @@ exclude = [
 cache_dir = "/tmp/.mypy_cache"
 
 [tool.taskipy.tasks]
-lint = 'black . && blue --check . --diff'
-format = 'blue .  && isort .'
+lint = 'black .'
+format = 'isort .'
 run = 'fastapi dev app/main.py --port 8000'
 pre_test = 'task lint'
 test = 'pytest --cov --cov=app/ --cov-branch --cov-fail-under=50 -s -x -vv'
