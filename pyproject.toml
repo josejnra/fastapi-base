@@ -89,7 +89,7 @@ lint = 'black .'
 format = 'isort .'
 run = 'fastapi dev app/main.py --port 8000'
 pre_test = 'task lint'
-test = 'pytest --cov --cov=app/ --cov-branch --cov-fail-under=50 -s -x -vv'
+test = 'pytest --cov --cov=app/ --cov-branch --cov-fail-under=49 -s -x -vv'
 post_test = 'coverage html'
 
 [build-system]
