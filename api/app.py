@@ -5,7 +5,12 @@ from sqlalchemy.engine.base import Engine
 from sqlmodel import Session, select
 
 from .database import create_db_and_tables, get_engine
-from .models import Actor, ActorMovie, Address, Movie
+from .models import (  # noqa: F401  # needed for sqlmodel in order to create tables
+    Actor,
+    ActorMovie,
+    Address,
+    Movie,
+)
 from .settings import Settings
 
 

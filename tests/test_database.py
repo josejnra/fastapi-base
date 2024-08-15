@@ -1,3 +1,4 @@
+import pytest
 from sqlmodel import Session, select
 
 from api.models import Actor
@@ -13,7 +14,10 @@ def test_create_actor(session: Session):
 
     statement = select(Actor)
     actor = session.exec(statement.where(Actor.name == "John Doe")).first()
-    assert actor.name == "John Doe"
+    if actor:
+        assert actor.name == "John Doe"
+    else:
+        pytest.fail("Actor not found")
 
     actors = session.exec(statement).all()
     total_actors = 2

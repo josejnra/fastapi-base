@@ -57,8 +57,6 @@ cache-dir = "/tmp/.ruff_cache"
 [tool.ruff.lint]
 preview = true
 select = ["I", "F", "E", "W", "PL", "PT"]
-# skip unused imports (`F401`).
-ignore = ["F401"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

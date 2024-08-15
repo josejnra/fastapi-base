@@ -1,3 +1,5 @@
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
@@ -12,7 +14,7 @@ def client():
 
 
 @pytest.fixture
-def session() -> Session:
+def session() -> Generator[Session, None, None]:
     settings = Settings()
     engine = create_engine(settings.database_url)
     # engine = create_engine("sqlite:///database.db")
