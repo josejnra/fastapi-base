@@ -89,7 +89,7 @@ lint = 'black . && blue --check . --diff'
 format = 'blue .  && isort .'
 run = 'fastapi dev app/main.py --port 8000'
 pre_test = 'task lint'
-test = 'pytest -s -x --cov=fast_zero -vv'
+test = 'pytest --cov --cov=app/ --cov-branch --cov-fail-under=50 -s -x -vv'
 post_test = 'coverage html'
 
 [build-system]
