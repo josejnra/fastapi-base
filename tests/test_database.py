@@ -1,7 +1,7 @@
 import pytest
 from sqlmodel import Session, select
 
-from api.models import Actor
+from app.models import Actor
 
 
 def test_create_actor(session: Session):

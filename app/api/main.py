@@ -1,17 +1,18 @@
 from functools import lru_cache
+from typing import Generator
 
 from fastapi import Depends, FastAPI
 from sqlalchemy.engine.base import Engine
 from sqlmodel import Session, select
 
-from .database import create_db_and_tables, get_engine
-from .models import (  # noqa: F401  # needed for sqlmodel in order to create tables
+from app.core.config import Settings
+from app.core.database import get_engine, init_db
+from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
     ActorMovie,
     Address,
     Movie,
 )
-from .settings import Settings
 
 
 @lru_cache
@@ -33,18 +34,25 @@ def engine() -> Engine:
         tuple[Engine, Settings]: engine and settings created
     """
     settings = get_settings()
-    engine = get_engine(settings.database_url)
-    create_db_and_tables(engine)
+    engine = get_engine(settings.DATABASE_URL)
+    init_db(engine)
 
     return engine
 
 
-def get_db_session():
+def get_db_session() -> Generator[Session, None, None]:
     with Session(engine()) as session:
         yield session
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Base code for FastAPI projects",
+    description="My FastAPI description",
+    openapi_url="/docs/openapi.json",
+    docs_url="/docs",  # interactive API documentation
+    redoc_url="/redoc",  # alternative automatic interactive API documentation
+    root_path="/api/v1",
+)
 
 
 @app.get("/")

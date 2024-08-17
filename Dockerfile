@@ -21,4 +21,4 @@ RUN pip install \
 
 COPY ./app /code/app
 
-CMD ["fastapi", "run", "app/main.py", "--port", "8000"]
+CMD ["fastapi", "run", "app/api/main.py", "--port", "8000"]

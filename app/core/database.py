@@ -14,7 +14,7 @@ def get_engine(db_url: str) -> Engine:
     return create_engine(db_url, echo=True)
 
 
-def create_db_and_tables(engine: Engine):
+def init_db(engine: Engine):
     """It takes an engine and uses it to create the database
         and all the tables registered in this MetaData object.
 

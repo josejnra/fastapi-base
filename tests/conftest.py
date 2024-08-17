@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 
-from api.app import app
-from api.settings import Settings
+from app.api.main import app
+from app.core.config import Settings
 
 
 @pytest.fixture
@@ -16,8 +16,7 @@ def client():
 @pytest.fixture
 def session() -> Generator[Session, None, None]:
     settings = Settings()
-    engine = create_engine(settings.database_url)
-    # engine = create_engine("sqlite:///database.db")
+    engine = create_engine(settings.DATABASE_URL)
 
     with Session(engine) as session:
         SQLModel.metadata.create_all(engine)
