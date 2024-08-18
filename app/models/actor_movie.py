@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import Field, Relationship
 
+from app.core.config import get_settings
+
 from .base import Base
 
 # in order to avoid circular imports
@@ -11,8 +13,16 @@ if TYPE_CHECKING:
 
 
 class ActorMovie(Base, table=True):
-    actor_id: int | None = Field(default=None, foreign_key="actor.id", primary_key=True)
-    movie_id: int | None = Field(default=None, foreign_key="movie.id", primary_key=True)
+    actor_id: int | None = Field(
+        default=None,
+        foreign_key=f"{get_settings().DATABASE_SCHEMA}.actor.id",
+        primary_key=True,
+    )
+    movie_id: int | None = Field(
+        default=None,
+        foreign_key=f"{get_settings().DATABASE_SCHEMA}.movie.id",
+        primary_key=True,
+    )
 
     actor: "Actor" = Relationship(back_populates="movie_links")
     movie: "Movie" = Relationship(back_populates="actor_links")
