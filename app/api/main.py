@@ -3,8 +3,8 @@ from functools import lru_cache
 from typing import Any, AsyncGenerator
 
 from fastapi import Depends, FastAPI
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import Settings
 from app.core.database import get_db_session, init_db
@@ -74,6 +74,6 @@ async def create_actor(actor: Actor, session: AsyncSession = Depends(get_db_sess
 
 @app.get("/actors", response_model=list[Actor])
 async def get_actors(session: AsyncSession = Depends(get_db_session)):
-    result = await session.execute(select(Actor))
-    actors = result.scalars().all()
+    result = await session.exec(select(Actor))
+    actors = result.all()
     return actors
