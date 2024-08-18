@@ -1,12 +1,13 @@
 from datetime import datetime
 
 from sqlalchemy import Column, func
-from sqlmodel import DateTime, Field, Relationship, SQLModel
+from sqlmodel import DateTime, Field, Relationship
 
 from .actor_movie import ActorMovie
+from .base import Base
 
 
-class Movie(SQLModel, table=True):
+class Movie(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     title: str
     year: int = Field(default=1900)

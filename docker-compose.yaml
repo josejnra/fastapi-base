@@ -1,23 +1,10 @@
-version: '3.8'
-
 services:
-  app:
-    image: fastapi-base:0.1.0
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: app
-    ports:
-      - 8000:8000
-    volumes:
-      - ./app:/code/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   database:
-    image: postgres:15.3
+    image: postgres:16.4
     container_name: database
-    volumes:
-      - ./volumes/postgres-data:/var/lib/postgresql/data
+    # volumes:
+    #   - ./volumes/postgres-data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -32,7 +19,22 @@ services:
       - database
     ports:
       - 8001:8000
-    volumes: 
-      - ./volumes/omnidb_server:/home/omnidb/.omnidb/omnidb-server
+    # volumes: 
+    #   - ./volumes/omnidb_server:/home/omnidb/.omnidb/omnidb-server
 
     # docker exec -it omnidb python omnidb-server.py --createsuperuser=user pass
+
+  app:
+    image: fastapi-base:0.1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app
+    ports:
+      - 8000:8000
+    volumes:
+      - ./app:/code/app
+    environment:
+      APP_DATABASE_URL: postgresql+asyncpg://postgres:postgres@database/postgres
+    depends_on:
+      - database

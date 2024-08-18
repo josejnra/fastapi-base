@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,4 +14,16 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
     # DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost/postgres"
-    DEBUG: bool = True
+    DATABASE_SCHEMA: str = "myapp"
+    DB_DEBUG: bool = True
+    API_ROOT_PATH: str = "/api/v1"
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """settings object will be created only once, the first time it's called
+
+    Returns:
+        Settings: settings object created
+    """
+    return Settings()

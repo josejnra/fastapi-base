@@ -2,14 +2,16 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, func
-from sqlmodel import DateTime, Field, Relationship, SQLModel
+from sqlmodel import DateTime, Field, Relationship
+
+from .base import Base
 
 # in order to avoid circular imports
 if TYPE_CHECKING:
     from .actor import Actor
 
 
-class Address(SQLModel, table=True):
+class Address(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     country: str
     city: str

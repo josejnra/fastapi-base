@@ -1,12 +1,11 @@
 from contextlib import asynccontextmanager
-from functools import lru_cache
 from typing import Any, AsyncGenerator
 
 from fastapi import Depends, FastAPI
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.config import Settings
+from app.core.config import get_settings
 from app.core.database import get_db_session, init_db
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
@@ -14,17 +13,6 @@ from app.models import (  # noqa: F401  # needed for sqlmodel in order to create
     Address,
     Movie,
 )
-
-
-@lru_cache
-def get_settings() -> Settings:
-    """settings object will be created only once, the first time it's called
-
-    Returns:
-        Settings: settings object created
-    """
-    settings = Settings()
-    return settings
 
 
 @asynccontextmanager
@@ -42,15 +30,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
     yield
 
 
-app = FastAPI(
-    title="Base code for FastAPI projects",
-    description="My FastAPI description",
-    openapi_url="/docs/openapi.json",
-    docs_url="/docs",  # interactive API documentation
-    redoc_url="/redoc",  # alternative automatic interactive API documentation
-    root_path="/api/v1",
-    lifespan=lifespan,
-)
+def create_app() -> FastAPI:
+    """Create FastAPI application.
+
+    Returns:
+        FastAPI: FastAPI application
+    """
+    app = FastAPI(
+        title="Base code for FastAPI projects",
+        description="My FastAPI description",
+        openapi_url="/docs/openapi.json",
+        docs_url="/docs",  # interactive API documentation
+        redoc_url="/redoc",  # alternative automatic interactive API documentation
+        root_path=get_settings().API_ROOT_PATH,
+        lifespan=lifespan,
+    )
+
+    return app
+
+
+app = create_app()
 
 
 @app.get("/")

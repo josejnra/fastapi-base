@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship
+
+from .base import Base
 
 # in order to avoid circular imports
 if TYPE_CHECKING:
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
     from .movie import Movie
 
 
-class ActorMovie(SQLModel, table=True):
+class ActorMovie(Base, table=True):
     actor_id: int | None = Field(default=None, foreign_key="actor.id", primary_key=True)
     movie_id: int | None = Field(default=None, foreign_key="movie.id", primary_key=True)
 

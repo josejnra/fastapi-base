@@ -1,13 +1,14 @@
 from datetime import datetime
 
 from sqlalchemy import Column, func
-from sqlmodel import DateTime, Field, Relationship, SQLModel
+from sqlmodel import DateTime, Field, Relationship
 
 from .actor_movie import ActorMovie
 from .address import Address
+from .base import Base
 
 
-class Actor(SQLModel, table=True):
+class Actor(Base, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     age: int
