@@ -32,7 +32,7 @@ types-pytz = {version ="^2024.1.0.20240417", optional = true}
 types-PyYAML = {version = "^6.0.12.20240808", optional = true}
 fastapi = {extras = ["standard"], version = "^0.112.0"}
 pydantic-settings = "^2.4.0"
-sqlalchemy = "^2.0.32"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.32"}
 alembic = "^1.13.2"
 sqlmodel = "^0.0.21"
 
@@ -47,6 +47,8 @@ mypy = "^1.11.1"
 faker = "^27.0.0"
 taskipy = "^1.13.0"
 ruff = "^0.6.0"
+pytest-asyncio = "^0.23.8"
+aiosqlite = "^0.20.0"
 
 [tool.ruff]
 line-length = 88
@@ -93,7 +95,7 @@ format = 'ruff check . --fix && ruff format .'
 pre_test = "task lint"
 test = "pytest --cov --cov-branch --cov-fail-under=75 --cov-report term --cov-report xml:coverage.xml"
 post_test = "coverage html"
-run = "fastapi dev api/app.py --port 8000"
+run = "fastapi dev app/api/main.py --port 8000"
 
 [tool.pytest.ini_options]
 cache_dir = "/tmp/.pytest_cache"
@@ -101,6 +103,7 @@ addopts = "-s -x -vv"
 testpaths = [
     "tests"
 ]
+asyncio_mode = "auto"
 
 [tool.coverage.html]
 directory = "/tmp/htmlcov"

@@ -1,12 +1,13 @@
+from contextlib import asynccontextmanager
 from functools import lru_cache
-from typing import Generator
+from typing import Any, AsyncGenerator
 
 from fastapi import Depends, FastAPI
-from sqlalchemy.engine.base import Engine
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from app.core.config import Settings
-from app.core.database import get_engine, init_db
+from app.core.database import get_db_session, init_db
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
     ActorMovie,
@@ -26,23 +27,19 @@ def get_settings() -> Settings:
     return settings
 
 
-@lru_cache
-def engine() -> Engine:
-    """all objects will be created only once, the first time it's called
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
+    """Run tasks before and after the server starts.
+
+    Args:
+        app (FastAPI): implicit FastAPI application
 
     Returns:
-        tuple[Engine, Settings]: engine and settings created
+        AsyncGenerator[Any, None]: application
     """
-    settings = get_settings()
-    engine = get_engine(settings.DATABASE_URL)
-    init_db(engine)
+    await init_db()
 
-    return engine
-
-
-def get_db_session() -> Generator[Session, None, None]:
-    with Session(engine()) as session:
-        yield session
+    yield
 
 
 app = FastAPI(
@@ -52,28 +49,31 @@ app = FastAPI(
     docs_url="/docs",  # interactive API documentation
     redoc_url="/redoc",  # alternative automatic interactive API documentation
     root_path="/api/v1",
+    lifespan=lifespan,
 )
 
 
 @app.get("/")
-def read_root():
+async def read_root():
     return {"Hello": "World"}
+    # return RedirectResponse(url="/docs")
 
 
 @app.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
+async def read_item(item_id: int, q: str | None = None):
     return {"item_id": item_id, "q": q}
 
 
-@app.get("/actors", response_model=list[Actor])
-def get_actors(session: Session = Depends(get_db_session)):
-    actors = session.exec(select(Actor)).all()
-    return actors
-
-
 @app.post("/actors", response_model=Actor)
-def create_actor(actor: Actor, session: Session = Depends(get_db_session)):
+async def create_actor(actor: Actor, session: AsyncSession = Depends(get_db_session)):
     session.add(actor)
-    session.commit()
-    session.refresh(actor)
+    await session.commit()
+    await session.refresh(actor)
     return actor
+
+
+@app.get("/actors", response_model=list[Actor])
+async def get_actors(session: AsyncSession = Depends(get_db_session)):
+    result = await session.execute(select(Actor))
+    actors = result.scalars().all()
+    return actors

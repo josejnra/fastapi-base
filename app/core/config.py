@@ -10,5 +10,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    DATABASE_URL: str = "sqlite:///:memory:"
+    DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
+    # DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost/postgres"
     DEBUG: bool = True
