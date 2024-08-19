@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, cast
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import QueryableAttribute, selectinload
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -91,14 +91,14 @@ async def get_actor(actor_id: int, session: AsyncSession = Depends(get_db_sessio
         select(Actor)
         .where(Actor.id == actor_id)
         .options(
-            selectinload(Actor.addresses),
-            selectinload(Actor.movie_links).selectinload(
-                ActorMovie.movie
+            selectinload(cast(QueryableAttribute, Actor.addresses)),
+            selectinload(cast(QueryableAttribute, Actor.movie_links)).selectinload(
+                cast(QueryableAttribute, ActorMovie.movie)
             ),  # loads all movies associated with the actor
         )
     )
-    result = await session.execute(statement)
-    actor = result.scalar_one_or_none()
+    result = await session.exec(statement)
+    actor = result.first()
 
     if actor is None:
         raise HTTPException(status_code=404, detail="Actor not found")
@@ -150,13 +150,13 @@ async def get_movie(movie_id: int, session: AsyncSession = Depends(get_db_sessio
         select(Movie)
         .where(Movie.id == movie_id)
         .options(
-            selectinload(Movie.actor_links).selectinload(
-                ActorMovie.actor
+            selectinload(cast(QueryableAttribute, Movie.actor_links)).selectinload(
+                cast(QueryableAttribute, ActorMovie.actor)
             ),  # loads all actors associated with the movie
         )
     )
-    result = await session.execute(statement)
-    movie = result.scalar_one_or_none()
+    result = await session.exec(statement)
+    movie = result.first()
 
     if movie is None:
         raise HTTPException(status_code=404, detail="Movie not found")

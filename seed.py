@@ -1,14 +1,13 @@
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, cast
 
 from faker import Faker
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from sqlalchemy.orm import selectinload, sessionmaker
+from sqlalchemy.orm import QueryableAttribute, selectinload, sessionmaker
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models import Actor, ActorMovie, Address, Movie
-from app.schemas import ActorResponse
 
 DB_URL = "postgresql+asyncpg://postgres:postgres@localhost/postgres"
 DB_SCHEMA = "myapp"
@@ -127,12 +126,12 @@ async def get_actor(actor_id: int = 20):
     async for session in get_session(engine):
         statment = (
             select(Actor)
-            .options(selectinload(Actor.addresses))
+            .options(selectinload(cast(QueryableAttribute, Actor.addresses)))
             .where(Actor.id == actor_id)
         )
         result = await session.scalars(statment)
         actor = result.first()
-        print(ActorResponse(**actor.model_dump()))
+        print(actor)
 
 
 async def list_actors():

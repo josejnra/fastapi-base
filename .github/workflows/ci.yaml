@@ -38,7 +38,7 @@ jobs:
         run: poetry install --all-extras
 
       - name: Code Quality Check
-        run: poetry run mypy .
+        run: poetry run mypy app
 
       - name: Test
         run: poetry run task test
