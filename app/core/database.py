@@ -49,7 +49,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
     # expire_on_commit=False will prevent attributes from being expired
     # after commit.
-    async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)  # type: ignore
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore
 
     async with async_session() as session:
         yield session

@@ -13,21 +13,31 @@ if TYPE_CHECKING:
     from .actor import Actor
 
 
-class Address(Base, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+class AddressBase(Base):
     country: str
     city: str
     address_line_1: str
     address_line_2: str | None = Field(default=None)
     postcode: str
+
+
+class Address(AddressBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), server_default=func.now())
+        default=None,
+        sa_column=Column(DateTime(timezone=True), server_default=func.now()),
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(DateTime(timezone=True), onupdate=func.now())
+        default=None, sa_column=Column(DateTime(timezone=True), onupdate=func.now())
     )
 
     actor_id: int = Field(
         default=None, foreign_key=f"{get_settings().DATABASE_SCHEMA}.actor.id"
     )
-    actor: "Actor" = Relationship(back_populates="addresses")
+
+    # `selectin` strategy breaks up the loading into two separate queries -
+    # one for the parent and one for the child objects.
+    # This can sometimes be faster than joinedload as it avoids complex joins.
+    actor: "Actor" = Relationship(
+        back_populates="addresses", sa_relationship_kwargs={"lazy": "selectin"}
+    )

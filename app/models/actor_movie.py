@@ -24,5 +24,9 @@ class ActorMovie(Base, table=True):
         primary_key=True,
     )
 
-    actor: "Actor" = Relationship(back_populates="movie_links")
-    movie: "Movie" = Relationship(back_populates="actor_links")
+    actor: "Actor" = Relationship(
+        back_populates="movie_links", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    movie: "Movie" = Relationship(
+        back_populates="actor_links", sa_relationship_kwargs={"lazy": "selectin"}
+    )

@@ -1,15 +1,23 @@
-from fastapi.testclient import TestClient
+import pytest
+from fastapi import status
+from httpx import AsyncClient
 
-from app.api.main import app
+# make all test mark with `asyncio`
+pytestmark = pytest.mark.asyncio
 
-client = TestClient(app)
+
+async def test_root(async_client: AsyncClient):
+    response = await async_client.get("healthchecker")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"message": "The API is LIVE!!"}
 
 
-def test_read_root():
-    response = client.get("/")
+async def test_read_root(async_client: AsyncClient):
+    response = await async_client.get("/")
     assert response.json() == {"Hello": "World"}
 
 
-def test_read_item():
-    response = client.get("/items/1", params={"q": "test"})
+async def test_read_item(async_client: AsyncClient):
+    response = await async_client.get("/items/1", params={"q": "test"})
     assert response.json() == {"item_id": 1, "q": "test"}
