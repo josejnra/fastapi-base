@@ -54,12 +54,3 @@ async def async_client(test_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
         timeout=None,
     ) as ac:
         yield ac
-
-
-# let test session to know it is running inside event loop
-# @pytest.fixture(scope='session')
-# def event_loop():
-#     policy = asyncio.get_event_loop_policy()
-#     loop = policy.new_event_loop()
-#     yield loop
-#     loop.close()
