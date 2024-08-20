@@ -17,9 +17,18 @@ class Settings(BaseSettings):
     DB_DEBUG: bool = False
     API_ROOT_PATH: str = "/api/v1"
 
+    def is_sqlite_database(self) -> bool:
+        return "sqlite" in self.DATABASE_URL
+
     @computed_field
     def DATABASE_SCHEMA(self) -> str:
-        return "" if "sqlite" in self.DATABASE_URL else "myapp"
+        """Set database schema name.
+            If database is sqlite, then schema name is empty.
+
+        Returns:
+            str: schema name
+        """
+        return "" if self.is_sqlite_database() else "myapp"
 
 
 @lru_cache

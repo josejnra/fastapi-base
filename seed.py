@@ -144,8 +144,8 @@ async def list_actors():
 
 
 if __name__ == "__main__":
-    # asyncio.run(seed_data())
+    asyncio.run(seed_data())
 
     # asyncio.run(list_actors())
 
-    asyncio.run(get_actor())
+    # asyncio.run(get_actor())

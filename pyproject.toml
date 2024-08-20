@@ -96,7 +96,7 @@ format = 'ruff check . --fix && ruff format .'
 pre_test = "task lint"
 test = "pytest --cov --cov-branch --cov-fail-under=75 --cov-report term --cov-report xml:coverage.xml"
 post_test = "coverage html"
-run = "fastapi dev app/api/main.py --port 8000"
+run = "fastapi dev app/main.py --port 8000"
 
 [tool.pytest.ini_options]
 cache_dir = "/tmp/.pytest_cache"

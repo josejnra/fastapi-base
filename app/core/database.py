@@ -28,12 +28,14 @@ async def init_db():
     and all the tables registered in this MetaData object if not exists.
 
     """
-    schema = get_settings().DATABASE_SCHEMA
-    SQLModel.metadata.schema = schema
-
     engine = get_engine()
     async with engine.begin() as conn:
-        await conn.execute(CreateSchema(schema, if_not_exists=True))
+        # sqlite doesn't support schema creation
+        if not get_settings().is_sqlite_database():
+            schema = get_settings().DATABASE_SCHEMA
+            SQLModel.metadata.schema = schema
+            await conn.execute(CreateSchema(schema, if_not_exists=True))
+
         await conn.run_sync(SQLModel.metadata.create_all)
 
 

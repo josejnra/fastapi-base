@@ -7,15 +7,10 @@ pytestmark = pytest.mark.asyncio
 
 
 async def test_root(async_client: AsyncClient):
-    response = await async_client.get("healthchecker")
+    response = await async_client.get("/healthchecker")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"message": "The API is LIVE!!"}
-
-
-async def test_read_root(async_client: AsyncClient):
-    response = await async_client.get("/")
-    assert response.json() == {"Hello": "World"}
 
 
 async def test_read_item(async_client: AsyncClient):

@@ -9,8 +9,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.api.main import app
 from app.core.database import get_db_session
+from app.main import app
 
 
 @pytest_asyncio.fixture
