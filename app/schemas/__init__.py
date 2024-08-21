@@ -1,13 +1,15 @@
 from .actor import ActorParam, ActorResponse, ActorResponseDetailed
-from .address import AddressResponse
+from .address import AddressParam, AddressResponse, AddressResponseDetailed
 from .movie import MovieParam, MovieResponse, MovieResponseDetailed
 
 __all__ = [
-    "ActorResponse",
-    "AddressResponse",
-    "MovieResponse",
     "ActorParam",
+    "ActorResponse",
     "ActorResponseDetailed",
+    "AddressParam",
+    "AddressResponse",
+    "AddressResponseDetailed",
     "MovieParam",
+    "MovieResponse",
     "MovieResponseDetailed",
 ]

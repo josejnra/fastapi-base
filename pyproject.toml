@@ -36,6 +36,7 @@ sqlalchemy = {extras = ["asyncio"], version = "^2.0.32"}
 alembic = "^1.13.2"
 sqlmodel = "^0.0.21"
 asyncpg = "^0.29.0"
+faker = {extras = ["postalcode"], version = "^27.0.0"}
 
 [tool.poetry.extras]
 dev_types = ["types-python-dateutil", "types-pytz", "types-PyYAML"]
@@ -87,7 +88,8 @@ quote-style = "double"
 docstring-code-format = true
 
 [tool.mypy]
-exclude = ["alembic", "migrations"]
+files = ["app", "tests"]
+exclude = ["alembic"]
 cache_dir = "/tmp/.mypy_cache"
 
 [tool.taskipy.tasks]

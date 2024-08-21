@@ -14,15 +14,15 @@ if TYPE_CHECKING:
 
 
 class AddressBase(Base):
-    country: str
-    city: str
-    address_line_1: str
-    address_line_2: str | None = Field(default=None)
-    postcode: str
+    country: str = Field(min_length=1, max_length=255)
+    city: str = Field(min_length=1, max_length=255)
+    address_line_1: str = Field(min_length=1, max_length=255)
+    address_line_2: str | None = Field(default=None, min_length=1, max_length=255)
+    post_code: str = Field(min_length=1, max_length=255)
 
 
 class Address(AddressBase, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int = Field(primary_key=True)
     created_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
@@ -32,7 +32,7 @@ class Address(AddressBase, table=True):
     )
 
     actor_id: int = Field(
-        default=None, foreign_key=f"{get_settings().DATABASE_SCHEMA}.actor.id"
+        nullable=False, foreign_key=f"{get_settings().DATABASE_SCHEMA}.actor.id"
     )
 
     # `selectin` strategy breaks up the loading into two separate queries -

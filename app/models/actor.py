@@ -9,12 +9,12 @@ from .base import Base
 
 
 class ActorBase(Base):
-    name: str
-    age: int
+    name: str = Field(min_length=1, max_length=255)
+    age: int = Field(ge=0, le=130)
 
 
 class Actor(ActorBase, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int = Field(primary_key=True)
     created_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),

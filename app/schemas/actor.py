@@ -14,7 +14,7 @@ class ActorParam(BaseModel):
 
 class ActorResponseDetailed(ActorBase):
     id: int
-    created_at: datetime | None = None
+    created_at: datetime
     updated_at: datetime | None = None
     addresses: list[Address] = []
     movies: list[Movie] = []
@@ -24,4 +24,4 @@ class ActorResponse(BaseModel):
     total: int
     page: int
     page_size: int
-    actors: list[ActorResponseDetailed]
+    actors: list[ActorResponseDetailed] = []

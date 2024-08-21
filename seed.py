@@ -34,45 +34,40 @@ async def seed_data():
     # create actors
     fake = Faker()
     actors = [
-        Actor(name=fake.name(), age=fake.random_int(min=10, max=90)),
-        Actor(name=fake.name(), age=fake.random_int(min=10, max=90)),
-        Actor(name=fake.name(), age=fake.random_int(min=10, max=90)),
+        Actor(id=i, name=fake.name(), age=fake.random_int(min=10, max=90))
+        for i in range(1, 4)
     ]
     async for session in get_session(engine):
         session.add_all(actors)
+        await session.refresh(actors)
         await session.commit()
 
     # create addresses
     addresses = [
         Address(
+            id=i,
+            actor=actor,
+            country=fake.country(),
+            city=fake.city(),
+            post_code=fake.postcode(),
+            address_line_1=fake.address(),
+            actor_id=actor.id,
+        )
+        for i, actor in enumerate(actors)
+    ]
+
+    # add one more address for first actor in the list
+    addresses.append(
+        Address(
+            id=len(addresses) + 1,
             actor=actors[0],
             country=fake.country(),
             city=fake.city(),
-            postcode=fake.postcode(),
+            post_code=fake.postcode(),
             address_line_1=fake.address(),
-        ),
-        Address(
-            actor=actors[1],
-            country=fake.country(),
-            city=fake.city(),
-            postcode=fake.postcode(),
-            address_line_1=fake.address(),
-        ),
-        Address(
-            actor=actors[2],
-            country=fake.country(),
-            city=fake.city(),
-            postcode=fake.postcode(),
-            address_line_1=fake.address(),
-        ),
-        Address(
-            actor=actors[2],
-            country=fake.country(),
-            city=fake.city(),
-            postcode=fake.postcode(),
-            address_line_1=fake.address(),
-        ),
-    ]
+            actor_id=actors[0].id,
+        )
+    )
     async for session in get_session(engine):
         session.add_all(addresses)
         await session.commit()
@@ -80,21 +75,25 @@ async def seed_data():
     # create movies
     movies = [
         Movie(
+            id=1,
             title=fake.sentence(),
             year=int(fake.year()),
             rating=fake.random_int(min=1, max=5),
         ),
         Movie(
+            id=2,
             title=fake.sentence(),
             year=int(fake.year()),
             rating=fake.random_int(min=1, max=5),
         ),
         Movie(
+            id=3,
             title=fake.sentence(),
             year=int(fake.year()),
             rating=fake.random_int(min=1, max=5),
         ),
         Movie(
+            id=4,
             title=fake.sentence(),
             year=int(fake.year()),
             rating=fake.random_int(min=1, max=5),

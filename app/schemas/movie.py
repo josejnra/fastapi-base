@@ -29,7 +29,7 @@ class MovieResponseDetailed(MovieBase):
     title: str
     year: int
     rating: int
-    created_at: datetime | None = None
+    created_at: datetime
     updated_at: datetime | None = None
 
     actors: list[Actor] = []
@@ -39,4 +39,4 @@ class MovieResponse(BaseModel):
     total: int
     page: int
     page_size: int
-    movies: list[MovieResponseDetailed]
+    movies: list[MovieResponseDetailed] = []

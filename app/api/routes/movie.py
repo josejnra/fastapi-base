@@ -30,7 +30,7 @@ async def create_movie(
     return MovieResponseDetailed(**new_movie.model_dump())
 
 
-@router.get("/", response_model=MovieResponse)
+@router.get("/", response_model=MovieResponse, status_code=status.HTTP_200_OK)
 async def get_movies(
     session: AsyncSession = Depends(get_db_session),
     page: int = Query(1, ge=1),
@@ -51,7 +51,9 @@ async def get_movies(
     return movies
 
 
-@router.get("/{movie_id}", response_model=MovieResponseDetailed)
+@router.get(
+    "/{movie_id}", response_model=MovieResponseDetailed, status_code=status.HTTP_200_OK
+)
 async def get_movie(movie_id: int, session: AsyncSession = Depends(get_db_session)):
     statement = (
         select(Movie)
