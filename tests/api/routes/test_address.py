@@ -7,23 +7,44 @@ from httpx import AsyncClient
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings
-from app.models import Actor
+from app.models import Actor, Address
 
 # make all test mark with `asyncio`
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture
-async def seed_actors(db_session: AsyncSession) -> bool:
-    """Fixture to seed actors."""
+async def seed_addresses_by_1_actor(
+    request: pytest.FixtureRequest, db_session: AsyncSession
+) -> list[Address]:
+    """Fixture to addresses for 1 actor."""
+    count_addresses = request.param
+
     fake = Faker()
-    actors = [
-        Actor(id=i, name=fake.name(), age=fake.random_int(min=10, max=90))
-        for i in range(1, 4)
-    ]
-    db_session.add_all(actors)
+    actor = Actor(id=1, name=fake.name(), age=fake.random_int(min=10, max=90))
+    db_session.add(actor)
     await db_session.commit()
-    return True
+    await db_session.refresh(actor)
+
+    addresses = [
+        Address(
+            id=i,
+            actor=actor,
+            country=fake.country(),
+            city=fake.city(),
+            post_code=fake.postcode(),
+            address_line_1=fake.address(),
+            actor_id=actor.id,
+        )
+        for i in range(1, count_addresses)
+    ]
+
+    db_session.add_all(addresses)
+    await db_session.commit()
+    for address in addresses:
+        await db_session.refresh(address)
+
+    return addresses
 
 
 @pytest.fixture
@@ -40,29 +61,11 @@ def fake_address() -> dict[str, Any]:
     }
 
 
-@pytest.fixture
-def fake_addresses(request: pytest.FixtureRequest) -> list[dict[str, Any]]:
-    n = request.param
-    fake = Faker()
-    addresses = [
-        {
-            "country": fake.country(),
-            "city": fake.city(),
-            "address_line_1": fake.address(),
-            "address_line_2": fake.street_address(),
-            "post_code": fake.postcode(),
-            "actor_id": fake.random_int(min=1, max=3),
-        }
-        for _ in range(n)
-    ]
-    return addresses
-
-
 async def test_create_address_success(
-    async_client: AsyncClient, fake_address: dict[str, Any], seed_actors: bool
+    async_client: AsyncClient, fake_address: dict[str, Any], seed_actors: list[Actor]
 ):
     """address is created successfully."""
-    print("SEED ACTORS", seed_actors)
+    print(f"seed_actors: {len(seed_actors)}")
     response = await async_client.post(
         f"{get_settings().API_ROOT_PATH}/addresses/", json=fake_address
     )
@@ -89,10 +92,10 @@ async def test_create_address_missing_field(async_client: AsyncClient):
 
 
 async def test_create_address_too_many_fields(
-    async_client: AsyncClient, fake_address: dict[str, Any], seed_actors: bool
+    async_client: AsyncClient, fake_address: dict[str, Any], seed_actors: list[Actor]
 ):
     """Fail to create an address with too many field."""
-    print("SEED ACTORS", seed_actors)
+    print(f"seed_actors: {len(seed_actors)}")
     fake_address["new_field_1"] = "new_field_1"
     fake_address["new_field_2"] = "new_field_2"
     response = await async_client.post(
@@ -101,18 +104,11 @@ async def test_create_address_too_many_fields(
     assert response.status_code == status.HTTP_201_CREATED
 
 
-async def test_get_address(
-    async_client: AsyncClient, fake_address: dict[str, Any], seed_actors: bool
-):
+async def test_get_address(async_client: AsyncClient, seed_addresses: list[Address]):
     """Successfully retrieve an address."""
-    print("SEED ACTORS", seed_actors)
-    # TODO: populate database with addresses instead of creating them one by one
-    address_created = await async_client.post(
-        f"{get_settings().API_ROOT_PATH}/addresses/", json=fake_address
-    )
-    address_id = address_created.json()["id"]
+    print(f"seed_actors: {len(seed_addresses)}")
     response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/addresses/{address_id}"
+        f"{get_settings().API_ROOT_PATH}/addresses/{seed_addresses[0].id}"
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -126,55 +122,28 @@ async def test_get_address_not_found(async_client: AsyncClient):
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.parametrize("fake_addresses", [0, 1, 5], indirect=True)
+@pytest.mark.parametrize("seed_addresses_by_1_actor", [0, 1, 5], indirect=True)
 async def test_get_addresses(
-    async_client: AsyncClient, fake_addresses: list[dict[str, Any]], seed_actors: bool
+    async_client: AsyncClient, seed_addresses_by_1_actor: list[Address]
 ):
     """Get list of addresses for 0, 1 and many addresses."""
-    print("SEED ACTORS", seed_actors)
-    # TODO: populate database with addresses instead of creating them one by one
-    # create addresses
-    for address in fake_addresses:
-        await async_client.post(
-            f"{get_settings().API_ROOT_PATH}/addresses/", json=address
-        )
+    print(f"seed_addresses_by_1_actor: {len(seed_addresses_by_1_actor)}")
 
-    # get addresses
+    # no params
     response = await async_client.get(f"{get_settings().API_ROOT_PATH}/addresses/")
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(fake_addresses)
-    if len(fake_addresses) > 0:
+    assert response.json()["total"] == len(seed_addresses_by_1_actor)
+    if len(seed_addresses_by_1_actor) > 0:
         assert response.json()["addresses"][0]["actor"] is None
 
-
-@pytest.mark.parametrize("fake_addresses", [11], indirect=True)
-async def test_get_addresses_with_pagination(
-    async_client: AsyncClient, fake_addresses: list[dict[str, Any]], seed_actors: bool
-):
-    """Get list of addresses for 0, 1 and many addresses."""
-    print("SEED ACTORS", seed_actors)
-    # TODO: populate database with addresses instead of creating them one by one
-    # create addresses
-    for address in fake_addresses:
-        await async_client.post(
-            f"{get_settings().API_ROOT_PATH}/addresses/", json=address
-        )
-
-    # get addresses
-    page_size = 10
+    # set page size
+    page_size = 1
     response = await async_client.get(
         f"{get_settings().API_ROOT_PATH}/addresses/", params={"page_size": page_size}
     )
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(fake_addresses)
-
-    # get addresses
-    page_size = 10
-    response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/addresses/", params={"page_size": page_size}
-    )
-    response = await async_client.get(f"{get_settings().API_ROOT_PATH}/addresses/")
+    response_json = response.json()
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(fake_addresses)
-    assert len(response.json()["addresses"]) == page_size
+    assert response.json()["total"] == len(seed_addresses_by_1_actor)
+    if len(seed_addresses_by_1_actor) > 0:
+        assert len(response_json["addresses"]) == page_size
