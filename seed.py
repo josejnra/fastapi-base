@@ -1,4 +1,5 @@
 import asyncio
+import random
 from typing import AsyncGenerator, cast
 
 from faker import Faker
@@ -75,44 +76,29 @@ async def seed_data():
     # create movies
     movies = [
         Movie(
-            id=1,
+            id=i,
             title=fake.sentence(),
             year=int(fake.year()),
             rating=fake.random_int(min=1, max=5),
-        ),
-        Movie(
-            id=2,
-            title=fake.sentence(),
-            year=int(fake.year()),
-            rating=fake.random_int(min=1, max=5),
-        ),
-        Movie(
-            id=3,
-            title=fake.sentence(),
-            year=int(fake.year()),
-            rating=fake.random_int(min=1, max=5),
-        ),
-        Movie(
-            id=4,
-            title=fake.sentence(),
-            year=int(fake.year()),
-            rating=fake.random_int(min=1, max=5),
-        ),
+        )
+        for i in range(1, 5)
     ]
 
     async for session in get_session(engine):
         session.add_all(movies)
         await session.commit()
 
-    # create actor-movie links
+    # adds 1 actor per movie, except for the last one
     actor_movies = [
-        ActorMovie(actor=actors[0], movie=movies[0]),
-        ActorMovie(actor=actors[1], movie=movies[1]),
-        ActorMovie(actor=actors[2], movie=movies[2]),
-        ActorMovie(actor=actors[2], movie=movies[3]),
-        ActorMovie(actor=actors[1], movie=movies[3]),
-        ActorMovie(actor=actors[0], movie=movies[3]),
+        ActorMovie(actor=actors[random.randint(0, len(actors))], movie=movie)
+        for movie in movies[:-1]
     ]
+
+    actor_movies.extend([
+        ActorMovie(actor=actors[1], movie=movies[0]),
+        ActorMovie(actor=actors[2], movie=movies[0]),
+    ])
+
     async for session in get_session(engine):
         session.add_all(actor_movies)
         await session.commit()

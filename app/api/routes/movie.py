@@ -6,10 +6,7 @@ from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_db_session
-from app.models import (
-    ActorMovie,
-    Movie,
-)
+from app.models import Actor, ActorMovie, Movie
 from app.schemas import MovieParam, MovieResponse, MovieResponseDetailed
 
 router = APIRouter()
@@ -22,12 +19,31 @@ async def create_movie(
     movie: MovieParam,
     session: AsyncSession = Depends(get_db_session),
 ):
+    # search for actors
+    actors: list[Actor] = []
+    for actor_id in movie.actors:
+        actor = await session.get(Actor, actor_id)
+        if actor is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Actor {actor_id} not found",
+            )
+        actors.append(actor)
+
+    # create movie
     new_movie = Movie(**movie.model_dump())
 
     session.add(new_movie)
+    # await session.commit()
+    # await session.refresh(new_movie)
+
+    # create actor-movie links
+    actor_movies = [ActorMovie(actor=actor, movie=new_movie) for actor in actors]
+
+    session.add_all(actor_movies)
     await session.commit()
-    await session.refresh(new_movie)
-    return MovieResponseDetailed(**new_movie.model_dump())
+
+    return MovieResponseDetailed(actors=actors, **new_movie.model_dump())
 
 
 @router.get("/", response_model=MovieResponse, status_code=status.HTTP_200_OK)

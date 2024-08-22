@@ -7,6 +7,7 @@ from httpx import AsyncClient
 
 from app.core.config import get_settings
 from app.models import Actor, Address
+from app.schemas import ActorResponseDetailed
 
 # make all test mark with `asyncio`
 pytestmark = pytest.mark.asyncio
@@ -93,10 +94,16 @@ async def test_get_actor_not_found(async_client: AsyncClient):
 @pytest.mark.parametrize("seed_actors", [0, 1, 5], indirect=True)
 async def test_get_actors(async_client: AsyncClient, seed_actors: list[Actor]):
     """Get list of actors for 0, 1 and many actors."""
+    movie_list_len = 0
+
     # no params
     response = await async_client.get(f"{get_settings().API_ROOT_PATH}/actors/")
+    response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(seed_actors)
+    assert response_json["total"] == len(seed_actors)
+    if len(seed_actors) > 0:
+        assert len(response_json["actors"][0]["movies"]) == movie_list_len
+        assert ActorResponseDetailed(**response_json["actors"][0])
 
     # set page size
     page_size = 1
@@ -109,7 +116,9 @@ async def test_get_actors(async_client: AsyncClient, seed_actors: list[Actor]):
     assert response_json["total"] == len(seed_actors)
     assert response_json["page_size"] == page_size
     if len(seed_actors) > 0:
+        assert len(response_json["actors"][0]["movies"]) == movie_list_len
         assert len(response_json["actors"]) == page_size
+        assert ActorResponseDetailed(**response_json["actors"][0])
 
 
 async def test_get_actors_wrong_page_values(

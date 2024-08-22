@@ -18,7 +18,7 @@ class AddressBase(Base):
     city: str = Field(min_length=1, max_length=255)
     address_line_1: str = Field(min_length=1, max_length=255)
     address_line_2: str | None = Field(default=None, min_length=1, max_length=255)
-    post_code: str = Field(min_length=1, max_length=255)
+    post_code: str = Field(min_length=1, max_length=15)
 
 
 class Address(AddressBase, table=True):

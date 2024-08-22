@@ -12,7 +12,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_db_session
 from app.main import app
-from app.models import Actor, Address
+from app.models import Actor, ActorMovie, Address, Movie
 
 
 @pytest_asyncio.fixture
@@ -62,12 +62,20 @@ async def async_client(test_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 async def seed_actors(
     request: pytest.FixtureRequest, db_session: AsyncSession
 ) -> list[Actor]:
-    """Fixture to seed actors."""
+    """Fixture to seed actors.
+
+    Args:
+        request (pytest.FixtureRequest): number of actors to create, defaults to 3.
+        db_session (AsyncSession): database session
+
+    Returns:
+        list[Actor]: list of actors
+    """
     n = getattr(request, "param", 3)
     fake = Faker()
     actors = [
         Actor(id=i, name=fake.name(), age=fake.random_int(min=10, max=90))
-        for i in range(1, n)
+        for i in range(1, n + 1)
     ]
     db_session.add_all(actors)
     await db_session.commit()
@@ -83,6 +91,10 @@ async def seed_addresses(
 ) -> list[Address]:
     """Fixture to seed addresses."""
     fake = Faker()
+    min_actors = 2
+    if len(seed_actors) < min_actors:
+        raise ValueError("number of actors must be >= 2")
+
     addresses = [
         Address(
             id=i,
@@ -113,3 +125,71 @@ async def seed_addresses(
     for address in addresses:
         await db_session.refresh(address)
     return addresses
+
+
+@pytest.fixture
+async def seed_movies(
+    request: pytest.FixtureRequest, db_session: AsyncSession, seed_actors: list[Actor]
+) -> list[Movie]:
+    """Fixture to seed movies.
+    Args:
+        request (pytest.FixtureRequest): number of movies to create, defaults to 4. Must be >= 2
+        db_session (AsyncSession): database session
+        seed_actors (list[Actor]): list of actors to use
+
+    Returns:
+        list[Movie]: list of movies.
+            when n = 1: list of 1 movie with 1 actor
+            when n>= 2: First movie has actors 1, 2, 3, last one has no actors.
+    """
+    n = getattr(request, "param", 4)
+    fake = Faker()
+
+    if n == 0:
+        return []
+    elif n == 1:
+        movie = Movie(
+            id=1,
+            title=fake.sentence(),
+            year=int(fake.year()),
+            rating=fake.random_int(min=1, max=5),
+        )
+        db_session.add(movie)
+        await db_session.commit()
+        await db_session.refresh(movie)
+
+        actor_movie = ActorMovie(actor=seed_actors[0], movie=movie)
+        db_session.add(actor_movie)
+        await db_session.commit()
+
+        return [movie]
+    else:
+        movies = [
+            Movie(
+                id=i,
+                title=fake.sentence(),
+                year=int(fake.year()),
+                rating=fake.random_int(min=1, max=5),
+            )
+            for i in range(1, n + 1)
+        ]
+
+        db_session.add_all(movies)
+        await db_session.commit()
+        for movie in movies:
+            await db_session.refresh(movie)
+
+        # adds 1 actor per movie, except for the last one
+        actor_movies = [
+            ActorMovie(actor=seed_actors[0], movie=movie) for movie in movies[:-1]
+        ]
+
+        # first movie has actors 1, 2, 3
+        actor_movies.extend([
+            ActorMovie(actor=seed_actors[1], movie=movies[0]),
+            ActorMovie(actor=seed_actors[2], movie=movies[0]),
+        ])
+
+        db_session.add_all(actor_movies)
+        await db_session.commit()
+        return movies

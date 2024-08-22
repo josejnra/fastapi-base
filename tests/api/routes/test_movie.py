@@ -6,6 +6,8 @@ from fastapi import status
 from httpx import AsyncClient
 
 from app.core.config import get_settings
+from app.models import Actor, Movie
+from app.schemas import MovieResponseDetailed
 
 # make all test mark with `asyncio`
 pytestmark = pytest.mark.asyncio
@@ -22,25 +24,12 @@ def fake_movie() -> dict[str, Any]:
     }
 
 
-@pytest.fixture
-def fake_movies(request: pytest.FixtureRequest) -> list[dict[str, Any]]:
-    n = request.param
-    fake = Faker()
-    movies = [
-        {
-            "title": fake.street_name(),
-            "year": fake.random_int(min=1920, max=2025),
-            "rating": fake.random_int(min=0, max=5),
-        }
-        for _ in range(n)
-    ]
-    return movies
-
-
-async def test_create_movie_success(
-    async_client: AsyncClient, fake_movie: dict[str, Any]
+async def test_create_movie_no_actors(
+    async_client: AsyncClient, fake_movie: dict[str, Any], seed_actors: list[Actor]
 ):
     """Movie is created successfully."""
+    print(f"seed_actors: {len(seed_actors)}")
+    fake_movie["actors"] = []
     response = await async_client.post(
         f"{get_settings().API_ROOT_PATH}/movies/", json=fake_movie
     )
@@ -49,6 +38,41 @@ async def test_create_movie_success(
     assert response_json["title"] == fake_movie["title"]
     assert response_json["year"] == fake_movie["year"]
     assert response_json["rating"] == fake_movie["rating"]
+    assert len(response_json["actors"]) == len(fake_movie["actors"])
+
+
+async def test_create_movie_1_actor(
+    async_client: AsyncClient, fake_movie: dict[str, Any], seed_actors: list[Actor]
+):
+    """Movie is created successfully."""
+    print(f"seed_actors: {len(seed_actors)}")
+    fake_movie["actors"] = [1]
+    response = await async_client.post(
+        f"{get_settings().API_ROOT_PATH}/movies/", json=fake_movie
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    response_json = response.json()
+    assert response_json["title"] == fake_movie["title"]
+    assert response_json["year"] == fake_movie["year"]
+    assert response_json["rating"] == fake_movie["rating"]
+    assert len(response_json["actors"]) == len(fake_movie["actors"])
+
+
+async def test_create_movie_many_actors(
+    async_client: AsyncClient, fake_movie: dict[str, Any], seed_actors: list[Actor]
+):
+    """Movie is created successfully."""
+    print(f"seed_actors: {len(seed_actors)}")
+    fake_movie["actors"] = [1, 2, 3]
+    response = await async_client.post(
+        f"{get_settings().API_ROOT_PATH}/movies/", json=fake_movie
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    response_json = response.json()
+    assert response_json["title"] == fake_movie["title"]
+    assert response_json["year"] == fake_movie["year"]
+    assert response_json["rating"] == fake_movie["rating"]
+    assert len(response_json["actors"]) == len(fake_movie["actors"])
 
 
 async def test_create_movie_missing_field(async_client: AsyncClient):
@@ -74,17 +98,45 @@ async def test_create_movie_too_many_fields(
     assert response.status_code == status.HTTP_201_CREATED
 
 
-async def test_get_movie(async_client: AsyncClient, fake_movie: dict[str, Any]):
-    """Successfully retrieve an movie."""
-    # TODO: populate database with movies instead of creating them one by one
-    movie_created = await async_client.post(
-        f"{get_settings().API_ROOT_PATH}/movies/", json=fake_movie
-    )
-    movie_id = movie_created.json()["id"]
+async def test_get_movie_no_actors(async_client: AsyncClient, seed_movies: list[Movie]):
+    """Successfully retrieve a movie."""
+    print(f"seed_movies: {len(seed_movies)}")
+    movie = seed_movies[-1]
     response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/movies/{movie_id}"
+        f"{get_settings().API_ROOT_PATH}/movies/{movie.id}"
     )
+    response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
+    assert response_json["id"] == movie.id
+    assert len(response_json["actors"]) == len(movie.actor_links)
+
+
+async def test_get_movie_1_actor(async_client: AsyncClient, seed_movies: list[Movie]):
+    """Successfully retrieve a movie."""
+    print(f"seed_movies: {len(seed_movies)}")
+    movie = seed_movies[1]
+    response = await async_client.get(
+        f"{get_settings().API_ROOT_PATH}/movies/{movie.id}"
+    )
+    response_json = response.json()
+    assert response.status_code == status.HTTP_200_OK
+    assert response_json["id"] == movie.id
+    assert len(response_json["actors"]) == len(movie.actor_links)
+
+
+async def test_get_movie_many_actors(
+    async_client: AsyncClient, seed_movies: list[Movie]
+):
+    """Successfully retrieve a movie."""
+    print(f"seed_movies: {len(seed_movies)}")
+    movie = seed_movies[0]
+    response = await async_client.get(
+        f"{get_settings().API_ROOT_PATH}/movies/{movie.id}"
+    )
+    response_json = response.json()
+    assert response.status_code == status.HTTP_200_OK
+    assert response_json["id"] == movie.id
+    assert len(response_json["actors"]) == len(movie.actor_links)
 
 
 async def test_get_movie_not_found(async_client: AsyncClient):
@@ -93,45 +145,46 @@ async def test_get_movie_not_found(async_client: AsyncClient):
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
-@pytest.mark.parametrize("fake_movies", [0, 1, 5], indirect=True)
-async def test_get_movies(async_client: AsyncClient, fake_movies: list[dict[str, Any]]):
+@pytest.mark.parametrize("seed_movies", [0, 1, 5], indirect=True)
+async def test_get_movies(async_client: AsyncClient, seed_movies: list[Movie]):
     """Get list of movies for 0, 1 and many movies."""
-    # TODO: populate database with movies instead of creating them one by one
-    # create movies
-    for movie in fake_movies:
-        await async_client.post(f"{get_settings().API_ROOT_PATH}/movies/", json=movie)
+    print(f"seed_movies: {len(seed_movies)}")
+    actors_list_len = 0
 
-    # get movies
+    # no params
     response = await async_client.get(f"{get_settings().API_ROOT_PATH}/movies/")
+    response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(fake_movies)
+    assert response_json["total"] == len(seed_movies)
+    if len(seed_movies) > 0:
+        assert len(response_json["movies"][0]["actors"]) == actors_list_len
+        assert MovieResponseDetailed(**response_json["movies"][0])
+
+    # set page size
+    page_size = 1
+    response = await async_client.get(
+        f"{get_settings().API_ROOT_PATH}/movies/", params={"page_size": page_size}
+    )
+    response_json = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response_json["total"] == len(seed_movies)
+    assert response_json["page_size"] == page_size
+    if len(seed_movies) > 0:
+        assert len(response_json["movies"][0]["actors"]) == actors_list_len
+        assert len(response_json["movies"]) == page_size
+        assert MovieResponseDetailed(**response_json["movies"][0])
 
 
-@pytest.mark.parametrize("fake_movies", [11], indirect=True)
-async def test_get_movies_with_pagination(
-    async_client: AsyncClient, fake_movies: list[dict[str, Any]]
+async def test_get_movies_wrong_page_values(
+    async_client: AsyncClient, seed_movies: list[Movie]
 ):
-    """Get list of movies for 0, 1 and many movies."""
-    # TODO: populate database with movies instead of creating them one by one
-    # create movies
-    for movie in fake_movies:
-        await async_client.post(f"{get_settings().API_ROOT_PATH}/movies/", json=movie)
-
-    # get movies
-    page_size = 10
+    """Validate wrong param when getting movies."""
+    print(f"seed_actors: {len(seed_movies)}")
+    # page size is 0
+    page_size = 0
     response = await async_client.get(
         f"{get_settings().API_ROOT_PATH}/movies/", params={"page_size": page_size}
     )
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(fake_movies)
 
-    # get movies
-    page_size = 10
-    response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/movies/", params={"page_size": page_size}
-    )
-    response = await async_client.get(f"{get_settings().API_ROOT_PATH}/movies/")
-
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(fake_movies)
-    assert len(response.json()["movies"]) == page_size
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

@@ -8,6 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings
 from app.models import Actor, Address
+from app.schemas import AddressResponseDetailed
 
 # make all test mark with `asyncio`
 pytestmark = pytest.mark.asyncio
@@ -131,10 +132,12 @@ async def test_get_addresses(
 
     # no params
     response = await async_client.get(f"{get_settings().API_ROOT_PATH}/addresses/")
+    response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["total"] == len(seed_addresses_by_1_actor)
+    assert response_json["total"] == len(seed_addresses_by_1_actor)
     if len(seed_addresses_by_1_actor) > 0:
-        assert response.json()["addresses"][0]["actor"] is None
+        assert response_json["addresses"][0]["actor"] is None
+        assert AddressResponseDetailed(**response_json["addresses"][0])
 
     # set page size
     page_size = 1
@@ -147,3 +150,4 @@ async def test_get_addresses(
     assert response.json()["total"] == len(seed_addresses_by_1_actor)
     if len(seed_addresses_by_1_actor) > 0:
         assert len(response_json["addresses"]) == page_size
+        assert AddressResponseDetailed(**response_json["addresses"][0])

@@ -23,4 +23,6 @@ class Movie(MovieBase, table=True):
         default=None, sa_column=Column(DateTime(timezone=True), onupdate=func.now())
     )
 
-    actor_links: list[ActorMovie] = Relationship(back_populates="movie")
+    actor_links: list[ActorMovie] = Relationship(
+        back_populates="movie", sa_relationship_kwargs={"lazy": "selectin"}
+    )
