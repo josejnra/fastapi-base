@@ -1,6 +1,7 @@
 from functools import lru_cache
+from typing import ClassVar
 
-from pydantic import computed_field
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,22 +14,60 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    DATABASE_URL: str = "sqlite+aiosqlite:///:memory:"
+    database_class: ClassVar[str | None] = None
+    database_schema_class: ClassVar[str | None] = None
+    DATABASE_URL: str = Field(
+        default="sqlite+aiosqlite:///:memory:", description="Database URL"
+    )
+    DATABASE_SCHEMA: str | None = Field(
+        default=None, description="database schema name"
+    )
     DB_DEBUG: bool = False
     API_ROOT_PATH: str = "/api/v1"
 
-    def is_sqlite_database(self) -> bool:
-        return "sqlite" in self.DATABASE_URL
-
-    @computed_field
-    def DATABASE_SCHEMA(self) -> str:
-        """Set database schema name.
-            If database is sqlite, then schema name is empty.
+    @computed_field()
+    def DATABASE(self) -> str:
+        """Define database name based on the following priority:
+            1. database_class - class variable
+            2. DATABASE_URL - environment variable or passed value
+            3. default - sqlitedb
 
         Returns:
             str: schema name
         """
-        return "" if self.is_sqlite_database() else "myapp"
+        if Settings.database_class is not None:
+            return Settings.database_class
+        else:
+            Settings.database_class = self.DATABASE_URL
+            return self.DATABASE_URL
+
+    def is_sqlite_database(self) -> bool:
+        return "sqlite" in self.DATABASE
+
+    @computed_field()
+    def SCHEMA(self) -> str:
+        """Define database schema name based on the following priority:
+            1. database_schema_class - class variable
+            2. DATABASE_SCHEMA - environment variable or passed value
+            3. sqlite database - for sqlite database, schema name is empty
+            4. default - myapp
+
+        Returns:
+            str: schema name
+        """
+        if Settings.database_schema_class not in {None, ""}:
+            return Settings.database_schema_class
+        elif self.DATABASE_SCHEMA is not None:
+            Settings.database_schema_class = self.DATABASE_SCHEMA
+            return self.DATABASE_SCHEMA
+        elif self.is_sqlite_database():
+            schema = ""
+            Settings.database_schema_class = schema
+            return schema
+        else:
+            schema = "myapp"
+            Settings.database_schema_class = schema
+            return schema
 
 
 @lru_cache

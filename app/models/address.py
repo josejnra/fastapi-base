@@ -22,7 +22,7 @@ class AddressBase(Base):
 
 
 class Address(AddressBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
@@ -32,12 +32,15 @@ class Address(AddressBase, table=True):
     )
 
     actor_id: int = Field(
-        nullable=False, foreign_key=f"{get_settings().DATABASE_SCHEMA}.actor.id"
+        nullable=False,
+        foreign_key=f"{get_settings().SCHEMA}.actor.id",
+        ondelete="CASCADE",
     )
 
     # `selectin` strategy breaks up the loading into two separate queries -
     # one for the parent and one for the child objects.
     # This can sometimes be faster than joinedload as it avoids complex joins.
     actor: "Actor" = Relationship(
-        back_populates="addresses", sa_relationship_kwargs={"lazy": "selectin"}
+        back_populates="addresses",
+        sa_relationship_kwargs={"lazy": "selectin"},
     )

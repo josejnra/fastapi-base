@@ -14,7 +14,7 @@ class MovieBase(Base):
 
 
 class Movie(MovieBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
@@ -24,5 +24,6 @@ class Movie(MovieBase, table=True):
     )
 
     actor_links: list[ActorMovie] = Relationship(
-        back_populates="movie", sa_relationship_kwargs={"lazy": "selectin"}
+        back_populates="movie",
+        sa_relationship_kwargs={"lazy": "selectin"},
     )

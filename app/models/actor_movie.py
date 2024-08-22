@@ -15,18 +15,22 @@ if TYPE_CHECKING:
 class ActorMovie(Base, table=True):
     actor_id: int | None = Field(
         default=None,
-        foreign_key=f"{get_settings().DATABASE_SCHEMA}.actor.id",
+        foreign_key=f"{get_settings().SCHEMA}.actor.id",
         primary_key=True,
+        ondelete="CASCADE",
     )
     movie_id: int | None = Field(
         default=None,
-        foreign_key=f"{get_settings().DATABASE_SCHEMA}.movie.id",
+        foreign_key=f"{get_settings().SCHEMA}.movie.id",
         primary_key=True,
+        ondelete="CASCADE",
     )
 
     actor: "Actor" = Relationship(
-        back_populates="movie_links", sa_relationship_kwargs={"lazy": "selectin"}
+        back_populates="movie_links",
+        sa_relationship_kwargs={"lazy": "selectin"},
     )
     movie: "Movie" = Relationship(
-        back_populates="actor_links", sa_relationship_kwargs={"lazy": "selectin"}
+        back_populates="actor_links",
+        sa_relationship_kwargs={"lazy": "selectin"},
     )

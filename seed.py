@@ -1,5 +1,4 @@
 import asyncio
-import random
 from typing import AsyncGenerator, cast
 
 from faker import Faker
@@ -35,18 +34,18 @@ async def seed_data():
     # create actors
     fake = Faker()
     actors = [
-        Actor(id=i, name=fake.name(), age=fake.random_int(min=10, max=90))
-        for i in range(1, 4)
+        Actor(name=fake.name(), age=fake.random_int(min=10, max=90))
+        for _ in range(1, 5)
     ]
     async for session in get_session(engine):
         session.add_all(actors)
-        await session.refresh(actors)
         await session.commit()
+        for actor in actors:
+            await session.refresh(actor)
 
     # create addresses
     addresses = [
         Address(
-            id=i,
             actor=actor,
             country=fake.country(),
             city=fake.city(),
@@ -54,13 +53,12 @@ async def seed_data():
             address_line_1=fake.address(),
             actor_id=actor.id,
         )
-        for i, actor in enumerate(actors)
+        for actor in actors
     ]
 
     # add one more address for first actor in the list
     addresses.append(
         Address(
-            id=len(addresses) + 1,
             actor=actors[0],
             country=fake.country(),
             city=fake.city(),
@@ -76,28 +74,26 @@ async def seed_data():
     # create movies
     movies = [
         Movie(
-            id=i,
             title=fake.sentence(),
             year=int(fake.year()),
             rating=fake.random_int(min=1, max=5),
         )
-        for i in range(1, 5)
+        for _ in range(1, 5)
     ]
 
     async for session in get_session(engine):
         session.add_all(movies)
         await session.commit()
+        for movie in movies:
+            await session.refresh(movie)
 
     # adds 1 actor per movie, except for the last one
     actor_movies = [
-        ActorMovie(actor=actors[random.randint(0, len(actors))], movie=movie)
-        for movie in movies[:-1]
+        ActorMovie(actor=actor, movie=movie)
+        for movie, actor in zip(movies[:-1], actors[:-1])
     ]
 
-    actor_movies.extend([
-        ActorMovie(actor=actors[1], movie=movies[0]),
-        ActorMovie(actor=actors[2], movie=movies[0]),
-    ])
+    actor_movies.extend([ActorMovie(actor=actors[-1], movie=movies[-1])])
 
     async for session in get_session(engine):
         session.add_all(actor_movies)

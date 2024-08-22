@@ -19,7 +19,7 @@ def get_engine() -> AsyncEngine:
         Maintains a pool of database connections.
     """
     settings = get_settings()
-    db_url = settings.DATABASE_URL
+    db_url = settings.DATABASE
     return create_async_engine(url=db_url, echo=settings.DB_DEBUG)
 
 
@@ -32,7 +32,7 @@ async def init_db():
     async with engine.begin() as conn:
         # sqlite doesn't support schema creation
         if not get_settings().is_sqlite_database():
-            schema = get_settings().DATABASE_SCHEMA
+            schema = get_settings().SCHEMA
             SQLModel.metadata.schema = schema
             await conn.execute(CreateSchema(schema, if_not_exists=True))
 

@@ -14,7 +14,7 @@ class ActorBase(Base):
 
 
 class Actor(ActorBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     created_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), server_default=func.now()),
@@ -23,11 +23,14 @@ class Actor(ActorBase, table=True):
         default=None, sa_column=Column(DateTime(timezone=True), onupdate=func.now())
     )
 
-    movie_links: list[ActorMovie] = Relationship(back_populates="actor")
+    movie_links: list[ActorMovie] = Relationship(
+        back_populates="actor", cascade_delete=True
+    )
 
     # `joined` is used which performs an SQL JOIN to load the related addresses objects.
     # This means all data is loaded in one go.
     # It results in fewer database round-trips, but the initial load might be slower due to the join operation.
     addresses: list[Address] = Relationship(
-        back_populates="actor", sa_relationship_kwargs={"lazy": "selectin"}
+        back_populates="actor",
+        sa_relationship_kwargs={"lazy": "selectin"},
     )
