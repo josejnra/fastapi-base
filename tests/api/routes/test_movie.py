@@ -24,12 +24,24 @@ def fake_movie() -> dict[str, Any]:
     }
 
 
-async def test_create_movie_no_actors(
-    async_client: AsyncClient, fake_movie: dict[str, Any], seed_actors: list[Actor]
+@pytest.mark.parametrize(
+    "actors_list, expected_count",  # noqa: PT006
+    [
+        ([], 0),  # no  actors
+        ([1], 1),  # 1 actor
+        ([1, 2, 3], 3),  # many actors
+    ],
+)
+async def test_create_movie(
+    async_client: AsyncClient,
+    fake_movie: dict[str, Any],
+    seed_actors: list[Actor],
+    actors_list: list[int],
+    expected_count: int,
 ):
-    """Movie is created successfully."""
+    """Create movie with different number of actors for each."""
     print(f"seed_actors: {len(seed_actors)}")
-    fake_movie["actors"] = []
+    fake_movie["actors"] = actors_list
     response = await async_client.post(
         f"{get_settings().API_ROOT_PATH}/movies/", json=fake_movie
     )
@@ -38,41 +50,7 @@ async def test_create_movie_no_actors(
     assert response_json["title"] == fake_movie["title"]
     assert response_json["year"] == fake_movie["year"]
     assert response_json["rating"] == fake_movie["rating"]
-    assert len(response_json["actors"]) == len(fake_movie["actors"])
-
-
-async def test_create_movie_1_actor(
-    async_client: AsyncClient, fake_movie: dict[str, Any], seed_actors: list[Actor]
-):
-    """Movie is created successfully."""
-    print(f"seed_actors: {len(seed_actors)}")
-    fake_movie["actors"] = [1]
-    response = await async_client.post(
-        f"{get_settings().API_ROOT_PATH}/movies/", json=fake_movie
-    )
-    assert response.status_code == status.HTTP_201_CREATED
-    response_json = response.json()
-    assert response_json["title"] == fake_movie["title"]
-    assert response_json["year"] == fake_movie["year"]
-    assert response_json["rating"] == fake_movie["rating"]
-    assert len(response_json["actors"]) == len(fake_movie["actors"])
-
-
-async def test_create_movie_many_actors(
-    async_client: AsyncClient, fake_movie: dict[str, Any], seed_actors: list[Actor]
-):
-    """Movie is created successfully."""
-    print(f"seed_actors: {len(seed_actors)}")
-    fake_movie["actors"] = [1, 2, 3]
-    response = await async_client.post(
-        f"{get_settings().API_ROOT_PATH}/movies/", json=fake_movie
-    )
-    assert response.status_code == status.HTTP_201_CREATED
-    response_json = response.json()
-    assert response_json["title"] == fake_movie["title"]
-    assert response_json["year"] == fake_movie["year"]
-    assert response_json["rating"] == fake_movie["rating"]
-    assert len(response_json["actors"]) == len(fake_movie["actors"])
+    assert len(response_json["actors"]) == expected_count
 
 
 async def test_create_movie_missing_field(async_client: AsyncClient):
@@ -98,45 +76,30 @@ async def test_create_movie_too_many_fields(
     assert response.status_code == status.HTTP_201_CREATED
 
 
-async def test_get_movie_no_actors(async_client: AsyncClient, seed_movies: list[Movie]):
-    """Successfully retrieve a movie."""
-    print(f"seed_movies: {len(seed_movies)}")
-    movie = seed_movies[-1]
-    response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/movies/{movie.id}"
-    )
-    response_json = response.json()
-    assert response.status_code == status.HTTP_200_OK
-    assert response_json["id"] == movie.id
-    assert len(response_json["actors"]) == len(movie.actor_links)
-
-
-async def test_get_movie_1_actor(async_client: AsyncClient, seed_movies: list[Movie]):
-    """Successfully retrieve a movie."""
-    print(f"seed_movies: {len(seed_movies)}")
-    movie = seed_movies[1]
-    response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/movies/{movie.id}"
-    )
-    response_json = response.json()
-    assert response.status_code == status.HTTP_200_OK
-    assert response_json["id"] == movie.id
-    assert len(response_json["actors"]) == len(movie.actor_links)
-
-
-async def test_get_movie_many_actors(
-    async_client: AsyncClient, seed_movies: list[Movie]
+@pytest.mark.parametrize(
+    "movie_index, expected_actors_count",  # noqa: PT006
+    [
+        (-1, 0),  # no actors
+        (1, 1),  # 1 actor
+        (0, 3),  # many actors
+    ],
+)
+async def test_get_movie(
+    async_client: AsyncClient,
+    seed_movies: list[Movie],
+    movie_index: int,
+    expected_actors_count: int,
 ):
     """Successfully retrieve a movie."""
     print(f"seed_movies: {len(seed_movies)}")
-    movie = seed_movies[0]
+    movie = seed_movies[movie_index]
     response = await async_client.get(
         f"{get_settings().API_ROOT_PATH}/movies/{movie.id}"
     )
     response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
     assert response_json["id"] == movie.id
-    assert len(response_json["actors"]) == len(movie.actor_links)
+    assert len(response_json["actors"]) == expected_actors_count
 
 
 async def test_get_movie_not_found(async_client: AsyncClient):

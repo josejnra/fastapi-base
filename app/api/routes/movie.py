@@ -34,8 +34,6 @@ async def create_movie(
     new_movie = Movie(**movie.model_dump())
 
     session.add(new_movie)
-    # await session.commit()
-    # await session.refresh(new_movie)
 
     # create actor-movie links
     actor_movies = [ActorMovie(actor=actor, movie=new_movie) for actor in actors]
