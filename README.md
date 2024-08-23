@@ -20,8 +20,8 @@ alembic init -t async alembic
 ```shell
 # against database
 alembic revision --autogenerate -m "create tables first version"
-# no database required
-alembic revision --no-autogenerate -m "my new revision"
+# no database required, but requires to manually edit script generated
+alembic revision -m "add last_name to actor"
 ```
 
 #### Run migrations

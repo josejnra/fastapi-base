@@ -20,7 +20,6 @@ async def run_migrations():
     print("Running migrations")
     alembic_cfg = Config()
     alembic_cfg.set_main_option("script_location", "app/migrations")
-    alembic_cfg.set_main_option("sqlalchemy.url", get_settings().DATABASE)
     alembic_cfg.set_main_option(
         "file_template", "%%(year)d-%%(month).2d-%%(day).2d_%%(slug)s"
     )

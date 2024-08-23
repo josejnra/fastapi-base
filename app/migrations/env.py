@@ -16,7 +16,7 @@ settings = get_settings()
 
 # when running migrations locally
 # settings = Settings(DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost/postgres")
-# config.set_main_option('sqlalchemy.url', settings.DATABASE)
+config.set_main_option('sqlalchemy.url', settings.DATABASE)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
