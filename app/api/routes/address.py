@@ -3,12 +3,14 @@ from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_db_session
+from app.core.logger import logger
 from app.models import Actor, Address
 from app.schemas import AddressParam, AddressResponse, AddressResponseDetailed
 
 router = APIRouter()
 
 
+@logger.catch
 @router.post(
     "/", response_model=AddressResponseDetailed, status_code=status.HTTP_201_CREATED
 )
@@ -16,6 +18,9 @@ async def create_address(
     address: AddressParam,
     session: AsyncSession = Depends(get_db_session),
 ):
+    child = logger.bind(**address.model_dump())
+    child.debug("Creating address")
+
     actor = await session.get(Actor, address.actor_id)
     if not actor:
         raise HTTPException(
@@ -30,6 +35,7 @@ async def create_address(
     return AddressResponseDetailed(actor=new_address.actor, **new_address.model_dump())
 
 
+@logger.catch
 @router.get("/", response_model=AddressResponse, status_code=status.HTTP_200_OK)
 async def get_addresses(
     session: AsyncSession = Depends(get_db_session),
@@ -53,6 +59,7 @@ async def get_addresses(
     return addresses
 
 
+@logger.catch
 @router.get(
     "/{address_id}",
     response_model=AddressResponseDetailed,
@@ -60,6 +67,9 @@ async def get_addresses(
 )
 async def get_address(address_id: int, session: AsyncSession = Depends(get_db_session)):
     address = await session.get(Address, address_id)
+    child = logger.bind(address_id=address_id)
+    child.debug("Getting address")
+
     if not address:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Address not found"

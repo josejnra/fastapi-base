@@ -6,12 +6,15 @@ from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_db_session
+from app.core.logger import logger
 from app.models import Actor, ActorMovie
 from app.schemas import ActorParam, ActorResponse, ActorResponseDetailed
 
 router = APIRouter()
 
 
+# catch an error and log it
+@logger.catch
 @router.post(
     "/", response_model=ActorResponseDetailed, status_code=status.HTTP_201_CREATED
 )
@@ -19,14 +22,17 @@ async def create_actor(
     actor: ActorParam,
     session: AsyncSession = Depends(get_db_session),
 ):
-    new_actor = Actor(**actor.model_dump())
+    child = logger.bind(**actor.model_dump())
+    child.debug("Creating actor")
 
+    new_actor = Actor(**actor.model_dump())
     session.add(new_actor)
     await session.commit()
     await session.refresh(new_actor)
     return ActorResponseDetailed(**new_actor.model_dump())
 
 
+@logger.catch
 @router.get("/", response_model=ActorResponse, status_code=status.HTTP_200_OK)
 async def get_actors(
     session: AsyncSession = Depends(get_db_session),
@@ -48,10 +54,14 @@ async def get_actors(
     return actors
 
 
+@logger.catch
 @router.get(
     "/{actor_id}", response_model=ActorResponseDetailed, status_code=status.HTTP_200_OK
 )
 async def get_actor(actor_id: int, session: AsyncSession = Depends(get_db_session)):
+    child = logger.bind(actor_id=actor_id)
+    child.debug("Getting actor")
+
     statement = (
         select(Actor)
         .where(Actor.id == actor_id)

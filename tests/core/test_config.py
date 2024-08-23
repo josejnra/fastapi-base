@@ -58,14 +58,12 @@ def test_schema_default_and_passed(default_settings: Settings):
     assert settings.SCHEMA == schema
 
 
-@pytest.mark.env
 def test_schema_from_env(monkeypatch: MonkeyPatch):
     monkeypatch.setenv("APP_DATABASE_SCHEMA", "myschema")
     settings = Settings()
     assert settings.SCHEMA == "myschema"
 
 
-@pytest.mark.env
 def test_database_from_env(monkeypatch: MonkeyPatch):
     monkeypatch.setenv("APP_DATABASE_URL", POSTGRES_URL)
     settings = Settings()

@@ -8,6 +8,7 @@ from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings
+from app.core.logger import logger
 
 
 @lru_cache
@@ -20,6 +21,9 @@ def get_engine() -> AsyncEngine:
     """
     settings = get_settings()
     db_url = settings.DATABASE
+
+    logger.debug(f"Connecting to database: {db_url} using schema: {settings.SCHEMA}")
+
     return create_async_engine(url=cast(str, db_url), echo=settings.DB_DEBUG)
 
 
@@ -28,12 +32,14 @@ async def init_db():
     and all the tables registered in this MetaData object if not exists.
 
     """
+    logger.info("Initializing database")
     engine = get_engine()
     async with engine.begin() as conn:
         # sqlite doesn't support schema creation
         if not get_settings().is_sqlite_database():
             schema = get_settings().SCHEMA
             SQLModel.metadata.schema = schema
+            logger.debug(f"Creating schema: {schema}")
             await conn.execute(CreateSchema(schema, if_not_exists=True))
 
         await conn.run_sync(SQLModel.metadata.create_all)

@@ -8,6 +8,8 @@ from fastapi import FastAPI, status
 
 from app.api import main
 from app.core.config import get_settings
+from app.core.database import init_db
+from app.core.logger import logger
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
     ActorMovie,
@@ -16,13 +18,15 @@ from app.models import (  # noqa: F401  # needed for sqlmodel in order to create
 )
 
 
+@logger.catch
 async def run_migrations():
-    print("Running migrations")
+    logger.info("Running migrations")
     alembic_cfg = Config()
     alembic_cfg.set_main_option("script_location", "app/migrations")
     await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
 
+@logger.catch
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
     """Run tasks before and after the server starts.
@@ -33,11 +37,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
     Returns:
         AsyncGenerator[Any, None]: application
     """
-    await run_migrations()
+    # applying migrations implies using a schema, which sqlite doesn't support
+    if get_settings().is_sqlite_database():
+        await init_db()
+    else:
+        await run_migrations()
 
     yield
 
 
+@logger.catch
 def create_app() -> FastAPI:
     """Create FastAPI application.
 

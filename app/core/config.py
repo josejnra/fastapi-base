@@ -23,6 +23,7 @@ class Settings(BaseSettings):
         default=None, description="database schema name"
     )
     DB_DEBUG: bool = False
+    LOG_LEVEL: str = "TRACE"
     API_ROOT_PATH: str = "/api/v1"
 
     @computed_field()
