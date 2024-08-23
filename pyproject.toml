@@ -89,7 +89,7 @@ quote-style = "double"
 docstring-code-format = true
 
 [tool.mypy]
-exclude = ["alembic"]
+exclude = ["migrations"] 
 cache_dir = "/tmp/.mypy_cache"
 
 [tool.taskipy.tasks]

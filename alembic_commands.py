@@ -21,6 +21,10 @@ def new_revision(msg: str):
     command.revision(get_alembic_config(), message=msg, autogenerate=True)
 
 
+def downgrade_revision(revision: str):
+    command.downgrade(get_alembic_config(), revision)
+
+
 if __name__ == "__main__":
     message = "add last_name to actor"
     new_revision(message)

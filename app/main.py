@@ -20,9 +20,6 @@ async def run_migrations():
     print("Running migrations")
     alembic_cfg = Config()
     alembic_cfg.set_main_option("script_location", "app/migrations")
-    alembic_cfg.set_main_option(
-        "file_template", "%%(year)d-%%(month).2d-%%(day).2d_%%(slug)s"
-    )
     await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
 
@@ -66,8 +63,3 @@ app = create_app()
 @app.get("/healthchecker", status_code=status.HTTP_200_OK)
 def root():
     return {"message": "The API is LIVE!!"}
-
-
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
