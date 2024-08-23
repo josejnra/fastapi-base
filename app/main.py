@@ -75,7 +75,7 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-@app.get("/healthchecker", status_code=status.HTTP_200_OK)
+@app.get("/health", status_code=status.HTTP_200_OK)
 @limiter.limit("5/minute")
-def root(request: Request, response: Response):  # noqa: ARG001
+def health(request: Request, response: Response):  # noqa: ARG001
     return {"message": "The API is LIVE!!"}

@@ -10,7 +10,7 @@ pytestmark = pytest.mark.asyncio
 
 
 async def test_root(async_client: AsyncClient):
-    response = await async_client.get("/healthchecker")
+    response = await async_client.get("/health")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"message": "The API is LIVE!!"}
@@ -34,8 +34,8 @@ async def test_lifespan(monkeypatch: MonkeyPatch):
 
 async def test_limiter(async_client: AsyncClient):
     for _ in range(4):
-        response = await async_client.get("/healthchecker")
+        response = await async_client.get("/health")
         assert response.status_code == status.HTTP_200_OK
 
-    response = await async_client.get("/healthchecker")
+    response = await async_client.get("/health")
     assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
