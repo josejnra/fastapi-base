@@ -42,7 +42,7 @@ def custom_settings() -> Settings:
 
 
 def test_schema_default(default_settings: Settings):
-    assert not default_settings.SCHEMA
+    assert default_settings.SCHEMA == ""  # noqa: PLC1901
 
 
 def test_schema_passed():

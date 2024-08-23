@@ -13,11 +13,15 @@ The application should be available at [0.0.0.0:8000](http://0.0.0.0:8000).
 #### Init alembic
 ```shell
 alembic init migrations
+alembic init -t async alembic
 ```
 
 #### Create migration
 ```shell
+# against database
 alembic revision --autogenerate -m "create tables first version"
+# no database required
+alembic revision --no-autogenerate -m "my new revision"
 ```
 
 #### Run migrations

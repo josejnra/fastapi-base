@@ -1,17 +1,30 @@
+import asyncio
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI, status
 
 from app.api import main
 from app.core.config import get_settings
-from app.core.database import init_db
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
     ActorMovie,
     Address,
     Movie,
 )
+
+
+async def run_migrations():
+    print("Running migrations")
+    alembic_cfg = Config()
+    alembic_cfg.set_main_option("script_location", "app/migrations")
+    alembic_cfg.set_main_option("sqlalchemy.url", get_settings().DATABASE)
+    alembic_cfg.set_main_option(
+        "file_template", "%%(year)d-%%(month).2d-%%(day).2d_%%(slug)s"
+    )
+    await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
 
 @asynccontextmanager
@@ -24,7 +37,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
     Returns:
         AsyncGenerator[Any, None]: application
     """
-    await init_db()
+    await run_migrations()
 
     yield
 

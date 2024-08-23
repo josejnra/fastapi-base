@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -42,7 +42,7 @@ class Settings(BaseSettings):
             return self.DATABASE_URL
 
     def is_sqlite_database(self) -> bool:
-        return "sqlite" in self.DATABASE
+        return "sqlite" in cast(str, self.DATABASE)
 
     @computed_field()
     def SCHEMA(self) -> str:
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
             str: schema name
         """
         if Settings.database_schema_class not in {None, ""}:
-            return Settings.database_schema_class
+            return cast(str, Settings.database_schema_class)
         elif self.DATABASE_SCHEMA is not None:
             Settings.database_schema_class = self.DATABASE_SCHEMA
             return self.DATABASE_SCHEMA

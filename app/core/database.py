@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import AsyncGenerator
+from typing import AsyncGenerator, cast
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,7 +20,7 @@ def get_engine() -> AsyncEngine:
     """
     settings = get_settings()
     db_url = settings.DATABASE
-    return create_async_engine(url=db_url, echo=settings.DB_DEBUG)
+    return create_async_engine(url=cast(str, db_url), echo=settings.DB_DEBUG)
 
 
 async def init_db():
