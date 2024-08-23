@@ -30,3 +30,12 @@ async def test_lifespan(monkeypatch: MonkeyPatch):
         response = await client.get("/docs")
 
     assert response.status_code == status.HTTP_200_OK
+
+
+async def test_limiter(async_client: AsyncClient):
+    for _ in range(4):
+        response = await async_client.get("/healthchecker")
+        assert response.status_code == status.HTTP_200_OK
+
+    response = await async_client.get("/healthchecker")
+    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS

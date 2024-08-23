@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     database_class: ClassVar[str | None] = None
     database_schema_class: ClassVar[str | None] = None
     DATABASE_URL: str = Field(
-        default="sqlite+aiosqlite:///:memory:", description="Database URL"
+        default="sqlite+aiosqlite:///:memory:",
+        description="Database async connection URL",
     )
     DATABASE_SCHEMA: str | None = Field(
         default=None, description="database schema name"

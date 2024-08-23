@@ -5,10 +5,15 @@ from typing import Any, AsyncGenerator
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI, status
+from slowapi import _rate_limit_exceeded_handler  # noqa: PLC2701
+from slowapi.errors import RateLimitExceeded
+from starlette.requests import Request
+from starlette.responses import Response
 
 from app.api import main
 from app.core.config import get_settings
 from app.core.database import init_db
+from app.core.limiter import limiter
 from app.core.logger import logger
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
@@ -61,7 +66,8 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",  # alternative automatic interactive API documentation
         lifespan=lifespan,
     )
-
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
     app.include_router(main.api_router, prefix=get_settings().API_ROOT_PATH)
     return app
 
@@ -70,5 +76,6 @@ app = create_app()
 
 
 @app.get("/healthchecker", status_code=status.HTTP_200_OK)
-def root():
+@limiter.limit("5/minute")
+def root(request: Request, response: Response):  # noqa: ARG001
     return {"message": "The API is LIVE!!"}

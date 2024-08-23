@@ -39,6 +39,7 @@ asyncpg = "^0.29.0"
 faker = {extras = ["postalcode"], version = "^27.0.0"}
 psycopg2-binary = "^2.9.9"
 loguru = "^0.7.2"
+slowapi = "^0.1.9"
 
 [tool.poetry.extras]
 dev_types = ["types-python-dateutil", "types-pytz", "types-PyYAML"]
