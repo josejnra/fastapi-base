@@ -1,3 +1,4 @@
+import os
 from typing import AsyncGenerator, Callable
 
 import pytest
@@ -199,4 +200,9 @@ async def seed_movies(
 
 @pytest.fixture
 def redis_client() -> Redis:
-    return from_url(get_settings().REDIS_URL)
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        redis_url = "redis://@redis:6379/0"
+    else:
+        redis_url = get_settings().REDIS_URL
+
+    return from_url(redis_url)

@@ -71,7 +71,7 @@ def create_app() -> FastAPI:
     # redis's rate limiter, based on username
     app.add_middleware(
         RateLimitMiddleware,
-        rate_limit=get_settings().RATE_LIMIT,
+        rate_limit_per_minute=get_settings().RATE_LIMIT,
     )
     app.include_router(main.api_router, prefix=get_settings().API_ROOT_PATH)
     return app
