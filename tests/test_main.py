@@ -2,18 +2,12 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from fastapi import status
 from httpx import AsyncClient
+from redis.asyncio import Redis
 
 from app.main import create_app
 
 # make all test mark with `asyncio`
 pytestmark = pytest.mark.asyncio
-
-
-async def test_root(async_client: AsyncClient):
-    response = await async_client.get("/health")
-
-    assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {"message": "The API is LIVE!!"}
 
 
 async def test_lifespan(monkeypatch: MonkeyPatch):
@@ -32,10 +26,25 @@ async def test_lifespan(monkeypatch: MonkeyPatch):
     assert response.status_code == status.HTTP_200_OK
 
 
-async def test_limiter(async_client: AsyncClient):
-    for _ in range(4):
-        response = await async_client.get("/health")
+async def test_slowapi(async_client: AsyncClient):
+    for _ in range(5):
+        response = await async_client.get("/")
         assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {"message": "The API is LIVE!!"}
 
-    response = await async_client.get("/health")
+    response = await async_client.get("/")
+    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+
+
+async def test_redis_rate_limiter(async_client: AsyncClient, redis_client: Redis):
+    # delete all keys
+    await redis_client.flushall()
+
+    headers = {"x-user": "test health user"}
+    for _ in range(5):
+        response = await async_client.get("/health", headers=headers)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {"message": "The API is LIVE!!"}
+
+    response = await async_client.get("/health", headers=headers)
     assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS

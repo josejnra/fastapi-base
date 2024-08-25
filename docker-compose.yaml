@@ -26,6 +26,12 @@ services:
 
     # docker exec -it omnidb python omnidb-server.py --createsuperuser=user pass
 
+  redis:
+    image: redis:7.4.0
+    container_name: redis
+    ports:
+      - 6379:6379
+
   app:
     image: fastapi-base:0.1.0
     build:
@@ -38,6 +44,8 @@ services:
       - ./app:/code/app
     environment:
       APP_DATABASE_URL: postgresql+asyncpg://postgres:postgres@database/postgres
+      APP_REDIS_URL: redis://redis:6379/0
     depends_on:
       - database
+      - redis
     # command: fastapi dev app/main.py --host 0.0.0.0 --port 8000

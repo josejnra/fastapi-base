@@ -4,16 +4,14 @@ from typing import Any, AsyncGenerator
 
 from alembic import command
 from alembic.config import Config
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, Response, status
 from slowapi import _rate_limit_exceeded_handler  # noqa: PLC2701
 from slowapi.errors import RateLimitExceeded
-from starlette.requests import Request
-from starlette.responses import Response
 
 from app.api import main
 from app.core.config import get_settings
 from app.core.database import init_db
-from app.core.limiter import limiter
+from app.core.limiter import RateLimitMiddleware, limiter
 from app.core.logger import logger
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
@@ -66,8 +64,15 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",  # alternative automatic interactive API documentation
         lifespan=lifespan,
     )
+    # slowapi, based on ip address
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
+
+    # redis's rate limiter, based on username
+    app.add_middleware(
+        RateLimitMiddleware,
+        rate_limit=get_settings().RATE_LIMIT,
+    )
     app.include_router(main.api_router, prefix=get_settings().API_ROOT_PATH)
     return app
 
@@ -75,7 +80,12 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-@app.get("/health", status_code=status.HTTP_200_OK)
+@app.get("/", status_code=status.HTTP_200_OK)
 @limiter.limit("5/minute")
-def health(request: Request, response: Response):  # noqa: ARG001
+def root(request: Request, response: Response):  # noqa: ARG001
+    return {"message": "The API is LIVE!!"}
+
+
+@app.get("/health", status_code=status.HTTP_200_OK)
+def health():
     return {"message": "The API is LIVE!!"}

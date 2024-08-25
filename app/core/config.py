@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     DB_DEBUG: bool = False
     LOG_LEVEL: str = "TRACE"
     API_ROOT_PATH: str = "/api/v1"
+    REDIS_URL: str = Field(
+        default="redis://@localhost:6379/0",
+        description="Redis async connection URL",
+    )
+    RATE_LIMIT: int = Field(default=5, description="Rate limit per user")
 
     @computed_field()
     def DATABASE(self) -> str:

@@ -4,7 +4,7 @@ on: [ push ]
 
 jobs:
 
-  test:
+  ci-workflow:
     name: ${{ matrix.os }} / ${{ matrix.python_version }}
     runs-on: ${{ matrix.os }}-latest
     env:
@@ -14,6 +14,17 @@ jobs:
       matrix:
         os: [Ubuntu] # [Ubuntu, Windows, macOS]
         python-version: ["3.12"]
+
+    services:
+      redis:
+        # Docker Hub image
+        image: redis
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -42,6 +53,9 @@ jobs:
 
       - name: Test
         run: poetry run task test
+        env:
+          # The hostname used to communicate with the Redis service container
+          API_REDIS_URL: redis://@redis:6379/0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -5,11 +5,13 @@ import pytest_asyncio
 from faker import Faker
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from redis.asyncio import Redis, from_url
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.core.config import get_settings
 from app.core.database import get_db_session
 from app.main import app
 from app.models import Actor, ActorMovie, Address, Movie
@@ -193,3 +195,8 @@ async def seed_movies(
         db_session.add_all(actor_movies)
         await db_session.commit()
         return movies
+
+
+@pytest.fixture
+def redis_client() -> Redis:
+    return from_url(get_settings().REDIS_URL)
