@@ -15,7 +15,7 @@ def serialize(record: "Record") -> str:
         "timestamp": record["time"].timestamp(),
         "message": record["message"],
         "level": record["level"].name,
-        "file": record["file"].name,
+        "file": str(record["name"]) + ":" + str(record["line"]),
         "context": record["extra"],
     }
     return json.dumps(subset)
