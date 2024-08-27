@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Callable, TypeVar, cast
 
 from fastapi import FastAPI, Request, status
@@ -49,7 +49,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """
         # Increment our most recent redis key
         username_hash = hashlib.sha256(bytes(user, "utf-8")).hexdigest()
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         current_minute = now.strftime("%Y-%m-%dT%H:%M")
 
         redis_key = f"rate_limit_{username_hash}_{current_minute}"

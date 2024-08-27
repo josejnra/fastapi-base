@@ -1,7 +1,72 @@
 services:
 
+  # log service
+  loki:
+    image: grafana/loki:main
+    container_name: loki
+    ports:
+      - 3100:3100
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+
+  # traces
+  # zipkin:
+  #   image: openzipkin/zipkin
+  #   container_name: zipkin
+  #   ports:
+  #     - 9411:9411
+  
+  # trace service
+  tempo:
+    image: grafana/tempo
+    container_name: tempo
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200"  # tempo /metrics
+      - "4317"  # otlp grpc
+      - "4318"  # otlp http
+    command: [ "-config.file=/etc/tempo.yaml" ]
+
+  # metrics service
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+      - --enable-feature=native-histograms
+
+  # observability service
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_BASIC_ENABLED: false
+      GF_FEATURE_TOGGLES_ENABLE: accessControlOnCall
+      GF_INSTALL_PLUGINS: https://storage.googleapis.com/integration-artifacts/grafana-lokiexplore-app/grafana-lokiexplore-app-latest.zip;grafana-lokiexplore-app
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+      # - zipkin
+    # volumes:
+    #   - ./grafana:/etc/grafana/provisioning
+
   database:
-    image: postgres:16.4
+    image: postgres
     container_name: database
     # volumes:
     #   - ./volumes/postgres-data:/var/lib/postgresql/data
@@ -27,10 +92,25 @@ services:
     # docker exec -it omnidb python omnidb-server.py --createsuperuser=user pass
 
   redis:
-    image: redis:7.4.0
+    image: redis
     container_name: redis
     ports:
       - 6379:6379
+
+  otel_collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otel_collector
+    ports:
+      - 4317:4317  # OTLP gRPC receiver
+      - 4318:4318  # OTLP http receiver
+      - 8888:8888  # Prometheus metrics exposed by the collector
+      - 8889:8889  # Prometheus exporter metrics
+      - 1888:1888  # pprof extension
+      - 13133:13133 # health_check extension
+      - 55679:55679  # zpages extension, which trace operations via /debug/tracez
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    command: ["--config=/etc/otel-collector-config.yaml"]
 
   app:
     image: fastapi-base:0.1.0
@@ -48,4 +128,5 @@ services:
     depends_on:
       - database
       - redis
+      - otel_collector
     # command: fastapi dev app/main.py --host 0.0.0.0 --port 8000

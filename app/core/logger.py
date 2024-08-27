@@ -38,7 +38,7 @@ logger.add(
 )
 
 logger.add(
-    "app.log",
+    "log.log",
     rotation="5 MB",
     format="{extra[serialized]}",
     level=settings.LOG_LEVEL,

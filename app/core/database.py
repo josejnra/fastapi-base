@@ -9,6 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings
 from app.core.logger import logger
+from app.core.telemetry import tracer
 
 
 @lru_cache
@@ -45,6 +46,7 @@ async def init_db():
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
+@tracer.start_as_current_span("get_db_session")
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """It takes an engine and uses it to create a session
         that will be used to interact with the database.

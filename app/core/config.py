@@ -31,6 +31,11 @@ class Settings(BaseSettings):
         description="Redis async connection URL",
     )
     RATE_LIMIT: int = Field(default=5, description="Rate limit per user")
+    OTEL_SDK_DISABLED: bool = Field(default=False, description="Disable OpenTelemetry")
+    OTEL_COLLECTOR_URL: str = Field(
+        default="otel_collector",
+        description="OpenTelemetry collector URL",
+    )
 
     @computed_field()
     def DATABASE(self) -> str:

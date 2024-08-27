@@ -1,12 +1,14 @@
 from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from opentelemetry import trace
 from sqlalchemy.orm import QueryableAttribute, selectinload
 from sqlmodel import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.database import get_db_session
 from app.core.logger import logger
+from app.core.telemetry import meter, tracer
 from app.models import Actor, ActorMovie
 from app.schemas import ActorParam, ActorResponse, ActorResponseDetailed
 
@@ -18,17 +20,32 @@ router = APIRouter()
 @router.post(
     "/", response_model=ActorResponseDetailed, status_code=status.HTTP_201_CREATED
 )
+@tracer.start_as_current_span("actor-post-route", kind=trace.SpanKind.CLIENT)
 async def create_actor(
     actor: ActorParam,
     session: AsyncSession = Depends(get_db_session),
 ):
-    child = logger.bind(**actor.model_dump())
-    child.debug("Creating actor")
+    work_counter = meter.create_counter(
+        name="actor_creation_counter",
+        unit="1",
+        description="Counts the number of calls to actors endpoint",
+    )
+    work_counter.add(1)
 
-    new_actor = Actor(**actor.model_dump())
-    session.add(new_actor)
-    await session.commit()
-    await session.refresh(new_actor)
+    with tracer.start_as_current_span("db-session-creation") as span:
+        span.set_attribute("actor", actor.name)
+        child = logger.bind(**actor.model_dump())
+        child.debug("Creating actor")
+
+        new_actor = Actor(**actor.model_dump())
+        session.add(new_actor)
+        await session.commit()
+        span.set_status(trace.Status(trace.StatusCode.OK))
+
+    with tracer.start_as_current_span("db-session-refresing") as span:
+        await session.refresh(new_actor)
+        span.set_attribute("actor-id", cast(int, new_actor.id))
+        span.set_status(trace.Status(trace.StatusCode.OK))
     return ActorResponseDetailed(**new_actor.model_dump())
 
 
