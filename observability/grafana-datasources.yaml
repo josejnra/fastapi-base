@@ -37,12 +37,3 @@ datasources:
   isDefault: false
   version: 1
   editable: false
-# - name: Zipkin
-#   type: zipkin
-#   access: proxy 
-#   orgId: 1
-#   url: http://zipkin:9411
-#   basicAuth: false
-#   isDefault: false
-#   version: 1
-#   editable: false

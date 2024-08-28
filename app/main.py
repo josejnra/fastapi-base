@@ -6,6 +6,7 @@ from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI, Request, Response, status
 from opentelemetry import trace
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi import _rate_limit_exceeded_handler  # noqa: PLC2701
 from slowapi.errors import RateLimitExceeded
 
@@ -14,7 +15,7 @@ from app.core.config import get_settings
 from app.core.database import init_db
 from app.core.limiter import RateLimitMiddleware, limiter
 from app.core.logger import logger
-from app.core.telemetry import meter, tracer
+from app.core.telemetry import meter, meter_provider, tracer, tracer_provider
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
     ActorMovie,
@@ -77,6 +78,11 @@ def create_app() -> FastAPI:
         rate_limit_per_minute=get_settings().RATE_LIMIT,
     )
 
+    # instrument the app
+    FastAPIInstrumentor.instrument_app(
+        app, tracer_provider=tracer_provider, meter_provider=meter_provider
+    )
+
     # add routers
     app.include_router(main.api_router, prefix=get_settings().API_ROOT_PATH)
     return app
@@ -92,7 +98,6 @@ def root(request: Request, response: Response):  # noqa: ARG001
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)
-@tracer.start_as_current_span("health-endpoint", kind=trace.SpanKind.INTERNAL)
 def health():
     work_counter = meter.create_counter(
         name="health_call_counter",
@@ -102,9 +107,8 @@ def health():
     work_counter.add(1)
 
     with tracer.start_as_current_span("building-response") as span:
-        span.set_status(trace.Status(trace.StatusCode.OK))
-        span.set_attribute("chamada do heatlh", "joinha")
-
         result = {"message": "The API is LIVE!!"}
+
+        span.set_status(trace.Status(trace.StatusCode.OK))
 
     return result

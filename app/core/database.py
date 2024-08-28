@@ -47,8 +47,8 @@ async def init_db():
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
-@tracer.start_as_current_span("get_db_session")
-async def get_db_session() -> AsyncSession:
+@tracer.start_as_current_span("getting db session")
+def get_db_session() -> AsyncSession:
     """It takes an engine and uses it to create a session
         that will be used to interact with the database.
 

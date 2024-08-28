@@ -43,6 +43,7 @@ slowapi = "^0.1.9"
 redis = "^5.0.8"
 opentelemetry-distro = "^0.47b0"
 opentelemetry-exporter-otlp = "^1.26.0"
+opentelemetry-instrumentation-fastapi = "^0.47b0"
 
 [tool.poetry.extras]
 dev_types = ["types-python-dateutil", "types-pytz", "types-PyYAML"]

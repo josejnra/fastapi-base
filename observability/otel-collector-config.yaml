@@ -1,12 +1,7 @@
-# Collector configuration reference
-# https://opentelemetry.io/docs/collector/configuration/
-
 extensions:
   zpages:
     endpoint: 0.0.0.0:55679
 
-# receivers reference
-# https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver
 receivers:
   otlp:
     protocols:
@@ -15,19 +10,12 @@ receivers:
       http:
         endpoint: 0.0.0.0:4318
 
-# exporters reference
-# https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter
 exporters:
   # tracing
   otlp/tempo:
-    endpoint: tempo:4317       # Endpoint for Tempo to send traces
+    endpoint: tempo:4317
     tls:
       insecure: true
-
-  # zipkin:
-  #   endpoint: http://zipkin:9411/api/v2/spans
-  #   tls:
-  #     insecure: true  
 
   # metrics
   prometheus:  # expose metrics in prometheus format at otel collector
@@ -45,16 +33,7 @@ exporters:
 processors:
   batch:
 
-# https://github.com/open-telemetry/opentelemetry-collector/blob/main/docs/troubleshooting.md
 service:
-  # https://opentelemetry.io/docs/collector/configuration/#telemetry
-  telemetry:
-    logs:
-      level: "debug"
-    metrics:
-      address: ":8888"  # otel collector metrics prometheus format exposed at /metrics
-      level: detailed
-
   extensions:
     - zpages
 
