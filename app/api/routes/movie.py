@@ -1,11 +1,10 @@
 from typing import cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy.orm import QueryableAttribute, selectinload
 from sqlmodel import func, select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.database import get_db_session
+from app.core.database import SessionDep
 from app.core.logger import logger
 from app.models import Actor, ActorMovie, Movie
 from app.schemas import MovieParam, MovieResponse, MovieResponseDetailed
@@ -19,7 +18,7 @@ router = APIRouter()
 )
 async def create_movie(
     movie: MovieParam,
-    session: AsyncSession = Depends(get_db_session),
+    session: SessionDep,
 ):
     child = logger.bind(**movie.model_dump())
     child.debug("Creating movie")
@@ -52,7 +51,7 @@ async def create_movie(
 @logger.catch
 @router.get("/", response_model=MovieResponse, status_code=status.HTTP_200_OK)
 async def get_movies(
-    session: AsyncSession = Depends(get_db_session),
+    session: SessionDep,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
 ):
@@ -75,7 +74,7 @@ async def get_movies(
 @router.get(
     "/{movie_id}", response_model=MovieResponseDetailed, status_code=status.HTTP_200_OK
 )
-async def get_movie(movie_id: int, session: AsyncSession = Depends(get_db_session)):
+async def get_movie(movie_id: int, session: SessionDep):
     child = logger.bind(actor_id=movie_id)
     child.debug("Getting movie")
 

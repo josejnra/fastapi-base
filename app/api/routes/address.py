@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import func, select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.database import get_db_session
+from app.core.database import SessionDep
 from app.core.logger import logger
 from app.models import Actor, Address
 from app.schemas import AddressParam, AddressResponse, AddressResponseDetailed
@@ -16,7 +15,7 @@ router = APIRouter()
 )
 async def create_address(
     address: AddressParam,
-    session: AsyncSession = Depends(get_db_session),
+    session: SessionDep,
 ):
     child = logger.bind(**address.model_dump())
     child.debug("Creating address")
@@ -38,7 +37,7 @@ async def create_address(
 @logger.catch
 @router.get("/", response_model=AddressResponse, status_code=status.HTTP_200_OK)
 async def get_addresses(
-    session: AsyncSession = Depends(get_db_session),
+    session: SessionDep,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
 ):
@@ -65,7 +64,7 @@ async def get_addresses(
     response_model=AddressResponseDetailed,
     status_code=status.HTTP_200_OK,
 )
-async def get_address(address_id: int, session: AsyncSession = Depends(get_db_session)):
+async def get_address(address_id: int, session: SessionDep):
     address = await session.get(Address, address_id)
     child = logger.bind(address_id=address_id)
     child.debug("Getting address")

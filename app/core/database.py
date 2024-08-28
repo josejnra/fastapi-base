@@ -1,6 +1,7 @@
 from functools import lru_cache
-from typing import AsyncGenerator, cast
+from typing import Annotated, cast
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import CreateSchema
@@ -47,7 +48,7 @@ async def init_db():
 
 
 @tracer.start_as_current_span("get_db_session")
-async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_db_session() -> AsyncSession:
     """It takes an engine and uses it to create a session
         that will be used to interact with the database.
 
@@ -57,9 +58,9 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     engine = get_engine()
 
-    # expire_on_commit=False will prevent attributes from being expired
-    # after commit.
+    # expire_on_commit=False will prevent attributes from being expired after commit.
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore
+    return cast(AsyncSession, async_session())
 
-    async with async_session() as session:
-        yield session
+
+SessionDep = Annotated[AsyncSession, Depends(get_db_session)]

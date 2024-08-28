@@ -1,12 +1,11 @@
 from typing import cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status
 from opentelemetry import trace
 from sqlalchemy.orm import QueryableAttribute, selectinload
 from sqlmodel import func, select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.database import get_db_session
+from app.core.database import SessionDep
 from app.core.logger import logger
 from app.core.telemetry import meter, tracer
 from app.models import Actor, ActorMovie
@@ -23,7 +22,7 @@ router = APIRouter()
 @tracer.start_as_current_span("actor-post-route", kind=trace.SpanKind.CLIENT)
 async def create_actor(
     actor: ActorParam,
-    session: AsyncSession = Depends(get_db_session),
+    session: SessionDep,
 ):
     work_counter = meter.create_counter(
         name="actor_creation_counter",
@@ -52,7 +51,7 @@ async def create_actor(
 @logger.catch
 @router.get("/", response_model=ActorResponse, status_code=status.HTTP_200_OK)
 async def get_actors(
-    session: AsyncSession = Depends(get_db_session),
+    session: SessionDep,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
 ):
@@ -75,7 +74,7 @@ async def get_actors(
 @router.get(
     "/{actor_id}", response_model=ActorResponseDetailed, status_code=status.HTTP_200_OK
 )
-async def get_actor(actor_id: int, session: AsyncSession = Depends(get_db_session)):
+async def get_actor(actor_id: int, session: SessionDep):
     child = logger.bind(actor_id=actor_id)
     child.debug("Getting actor")
 

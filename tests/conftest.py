@@ -29,22 +29,26 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.begin() as connection:
         await connection.run_sync(SQLModel.metadata.drop_all)
         await connection.run_sync(SQLModel.metadata.create_all)
-        async with async_session(bind=connection) as session:
-            yield session
-            await session.flush()
-            await session.rollback()
+        session = async_session(bind=connection)
+        yield session
+        await session.flush()
+        await session.rollback()
 
 
 @pytest.fixture
-def override_get_db(db_session: AsyncSession) -> Callable:
-    async def _override_get_db():
+def override_get_db(
+    db_session: AsyncSession,
+) -> Callable[[], AsyncGenerator[AsyncSession, None]]:
+    async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     return _override_get_db
 
 
 @pytest.fixture
-def test_app(override_get_db: Callable) -> FastAPI:
+def test_app(
+    override_get_db: Callable[[], AsyncGenerator[AsyncSession, None]],
+) -> FastAPI:
     app.dependency_overrides[get_db_session] = override_get_db
 
     return app

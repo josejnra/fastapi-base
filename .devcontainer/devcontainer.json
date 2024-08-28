@@ -39,7 +39,8 @@
 				"streetsidesoftware.code-spell-checker",
 				"njpwerner.autodocstring",
 				"Supermaven.supermaven",
-				"charliermarsh.ruff"
+				"charliermarsh.ruff",
+				"jock.svg"
 			],
 			"settings": {
 				"terminal.integrated.scrollback": 10000,
