@@ -15,7 +15,7 @@ from app.core.config import get_settings
 from app.core.database import init_db
 from app.core.limiter import RateLimitMiddleware, limiter
 from app.core.logger import logger
-from app.core.telemetry import meter, meter_provider, tracer, tracer_provider
+from app.core.telemetry import meter, tracer
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
     Actor,
     ActorMovie,
@@ -79,9 +79,7 @@ def create_app() -> FastAPI:
     )
 
     # instrument the app
-    FastAPIInstrumentor.instrument_app(
-        app, tracer_provider=tracer_provider, meter_provider=meter_provider
-    )
+    FastAPIInstrumentor.instrument_app(app)
 
     # add routers
     app.include_router(main.api_router, prefix=get_settings().API_ROOT_PATH)

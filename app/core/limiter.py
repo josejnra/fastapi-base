@@ -24,7 +24,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.rate_limit = rate_limit_per_minute
         self.redis_client: Redis | None = None
 
-    @tracer.start_as_current_span("rate limit middleware")
+    @tracer.start_as_current_span("middleware - redis rate limit")
     async def dispatch(self, request: Request, call_next: F) -> Response:
         """
         Rate limit requests per user
@@ -45,7 +45,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
-    @tracer.start_as_current_span("checking user rate limit")
+    @tracer.start_as_current_span("middleware - checking user rate limit")
     async def rate_limit_user(self, user: str, rate_limit: int) -> JSONResponse | None:
         """
         Apply rate limiting per user, per minute

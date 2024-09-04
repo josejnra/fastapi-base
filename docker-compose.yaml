@@ -9,13 +9,6 @@ services:
     volumes:
       - ./observability/loki-config.yaml:/etc/loki/local-config.yaml
     command: -config.file=/etc/loki/local-config.yaml
-
-  # traces
-  # zipkin:
-  #   image: openzipkin/zipkin
-  #   container_name: zipkin
-  #   ports:
-  #     - 9411:9411
   
   # trace service
   tempo:
@@ -61,7 +54,6 @@ services:
       - loki
       - prometheus
       - tempo
-      # - zipkin
     # volumes:
     #   - ./grafana:/etc/grafana/provisioning
 
@@ -103,7 +95,6 @@ services:
     ports:
       - 4317:4317  # OTLP gRPC receiver
       - 4318:4318  # OTLP http receiver
-      - 8888:8888  # Prometheus metrics exposed by the collector
       - 8889:8889  # Prometheus exporter metrics
       - 1888:1888  # pprof extension
       - 13133:13133 # health_check extension

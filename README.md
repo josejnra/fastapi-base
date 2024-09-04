@@ -42,3 +42,14 @@ Check the metrics at [grafana](http://localhost:3000/) on data source `Loki`
 ```shell
 alembic upgrade head
 ```
+
+
+## References
+
+- [Best Practices for FastAPI](https://github.com/zhanymkanov/fastapi-best-practices#3-use-dependencies-for-data-validation-vs-db)
+- [FastAPI Tips](https://github.com/Kludex/fastapi-tips)
+- [FastAPI Project Structure](https://christophergs.com/tutorials/ultimate-fastapi-tutorial-pt-8-project-structure-api-versioning/)
+- [How to Structure FastAPI Project](https://medium.com/@amirm.lavasani/how-to-structure-your-fastapi-projects-0219a6600a8f)
+- [CQRS Pattern with FastAPI](https://github.com/marcosvs98/cqrs-architecture-with-python)
+- [FastAPI with SQLModel async](https://github.com/jonra1993/fastapi-alembic-sqlmodel-async)
+- [Corona Virus API](https://github.com/Spiderpig86/coronavirus-us-api)
