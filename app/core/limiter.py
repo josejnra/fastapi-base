@@ -18,6 +18,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 limiter = Limiter(key_func=get_remote_address, default_limits=["2/5seconds"])
 
 
+# TODO: implement middleware based on Pure ASGI Midleware, better performance
+# https://www.starlette.io/middleware/#pure-asgi-middleware
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: FastAPI, rate_limit_per_minute: int) -> None:
         super().__init__(app)

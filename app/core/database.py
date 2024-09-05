@@ -14,7 +14,7 @@ from app.core.telemetry import tracer
 
 
 @lru_cache
-def get_engine() -> AsyncEngine:
+async def get_engine() -> AsyncEngine:
     """Get SQLAlchemy engine from database URL.
 
     Returns:
@@ -48,7 +48,7 @@ async def init_db():
 
 
 @tracer.start_as_current_span("getting db session")
-def get_db_session() -> AsyncSession:
+async def get_db_session() -> AsyncSession:
     """It takes an engine and uses it to create a session
         that will be used to interact with the database.
 

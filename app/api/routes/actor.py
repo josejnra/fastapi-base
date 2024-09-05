@@ -17,7 +17,15 @@ router = APIRouter()
 # catch an error and log it
 @logger.catch
 @router.post(
-    "/", response_model=ActorResponseDetailed, status_code=status.HTTP_201_CREATED
+    "/",
+    response_model=ActorResponseDetailed,
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {
+            "model": ActorResponseDetailed,
+            "description": "Actor created",
+        }
+    },
 )
 async def create_actor(
     actor: ActorParam,
@@ -81,7 +89,15 @@ async def get_actors(
 
 @logger.catch
 @router.get(
-    "/{actor_id}", response_model=ActorResponseDetailed, status_code=status.HTTP_200_OK
+    "/{actor_id}",
+    response_model=ActorResponseDetailed,
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_201_CREATED: {
+            "model": ActorResponseDetailed,
+            "description": "Retrieve specific actor",
+        },
+    },
 )
 async def get_actor(actor_id: int, session: SessionDep):
     child = logger.bind(actor_id=actor_id)
