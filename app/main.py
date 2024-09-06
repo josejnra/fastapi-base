@@ -21,6 +21,7 @@ from app.models import (  # noqa: F401  # needed for sqlmodel in order to create
     ActorMovie,
     Address,
     Movie,
+    User,
 )
 
 
@@ -91,12 +92,12 @@ app = create_app()
 
 @app.get("/", status_code=status.HTTP_200_OK)
 @limiter.limit("5/minute")
-def root(request: Request, response: Response):  # noqa: ARG001
+async def root(request: Request, response: Response):  # noqa: ARG001
     return {"message": "The API is LIVE!!"}
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)
-def health():
+async def health():
     work_counter = meter.create_counter(
         name="health_call_counter",
         unit="1",

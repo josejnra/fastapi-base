@@ -1,3 +1,4 @@
+import secrets
 from functools import lru_cache
 from typing import ClassVar, cast
 
@@ -80,6 +81,15 @@ class Settings(BaseSettings):
             schema = "myapp"
             Settings.database_schema_class = schema
             return schema
+
+    SECRET_KEY: str = Field(
+        default_factory=lambda: secrets.token_urlsafe(32),
+        description="JWT Secret Key",
+    )
+    ALGORITHM: str = Field(default="HS256", description="JWT Algorithm")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=30, description="JWT Access Token Expire Minutes"
+    )
 
 
 @lru_cache

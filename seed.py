@@ -7,7 +7,8 @@ from sqlalchemy.orm import QueryableAttribute, selectinload, sessionmaker
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.models import Actor, ActorMovie, Address, Movie
+from app.core.security import get_password_hash
+from app.models import Actor, ActorMovie, Address, Movie, User
 
 DB_URL = "postgresql+asyncpg://postgres:postgres@localhost/postgres"
 DB_SCHEMA = "myapp"
@@ -30,6 +31,18 @@ async def get_session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]
 
 async def seed_data():
     engine = get_engine()
+
+    # adds initial user
+    user = User(
+        name="admin",
+        username="admin",
+        email="admin@admin.com",
+        password=get_password_hash("123"),
+    )
+    async for session in get_session(engine):
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
 
     # create actors
     fake = Faker()

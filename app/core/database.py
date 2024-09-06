@@ -14,7 +14,7 @@ from app.core.telemetry import tracer
 
 
 @lru_cache
-async def get_engine() -> AsyncEngine:
+def get_engine() -> AsyncEngine:
     """Get SQLAlchemy engine from database URL.
 
     Returns:

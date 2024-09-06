@@ -13,8 +13,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_db_session
+from app.core.security import get_password_hash
 from app.main import app
-from app.models import Actor, ActorMovie, Address, Movie
+from app.models import Actor, ActorMovie, Address, Movie, User
 
 
 @pytest_asyncio.fixture
@@ -62,6 +63,50 @@ async def async_client(test_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
         timeout=None,
     ) as ac:
         yield ac
+
+
+@pytest.fixture
+async def seed_users(
+    request: pytest.FixtureRequest, db_session: AsyncSession
+) -> list[User]:
+    """Fixture to seed users.
+
+    Args:
+        request (pytest.FixtureRequest): number of users to create, defaults to 1.
+        db_session (AsyncSession): database session
+
+    Returns:
+        list[User]: list of users
+    """
+    n = getattr(request, "param", 1)
+    fake = Faker()
+
+    users = [
+        User(
+            name="admin",
+            username="admin",
+            email="admin@admin.com",
+            password=get_password_hash("123"),
+        )
+    ]
+    if n > 1:
+        new_users = [
+            User(
+                name=fake.name(),
+                username=fake.user_name(),
+                email=fake.email(),
+                password=get_password_hash(fake.password()),
+            )
+            for _ in range(n - 1)
+        ]
+        users.extend(new_users)
+
+    db_session.add_all(users)
+    await db_session.commit()
+    for user in users:
+        await db_session.refresh(user)
+
+    return users
 
 
 @pytest.fixture

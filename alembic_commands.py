@@ -1,3 +1,10 @@
+"""
+steps to run this script:
+- docker compose up -d
+- update __main__ accordingly
+- python alembic_commands.py
+"""
+
 import os
 
 from alembic import command
@@ -26,5 +33,5 @@ def downgrade_revision(revision: str):
 
 
 if __name__ == "__main__":
-    message = "add last_name to actor"
+    message = "adds user table"
     new_revision(message)
