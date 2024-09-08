@@ -1,3 +1,5 @@
+import secrets
+
 import pytest
 from httpx import AsyncClient
 from starlette import status
@@ -31,6 +33,16 @@ async def test_generate_token(seed_users: list[User], async_client: AsyncClient)
     )
     assert response.status_code == status.HTTP_200_OK
     assert response.json()["message"] == f"User {seed_users[0].username} authenticated"
+
+
+async def test_incorrect_token(async_client: AsyncClient):
+    """test fails using incorrect token"""
+    header = {"Authorization": f"Bearer {secrets.token_hex(32)}"}
+    response = await async_client.get(
+        f"{get_settings().API_ROOT_PATH}/auth/me", headers=header
+    )
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
 
 async def test_incorrect_password(seed_users: list[User], async_client: AsyncClient):
     """test fails to generate token"""

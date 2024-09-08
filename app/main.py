@@ -5,6 +5,8 @@ from typing import Any, AsyncGenerator
 from alembic import command
 from alembic.config import Config
 from fastapi import FastAPI, Request, Response, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi import _rate_limit_exceeded_handler  # noqa: PLC2701
@@ -68,6 +70,26 @@ def create_app() -> FastAPI:
         redoc_url="/redoc",  # alternative automatic interactive API documentation
         lifespan=lifespan,
     )
+    # CORS (Cross-Origin Resource Sharing)
+    origins = [
+        "http://localhost.tiangolo.com",
+        "https://localhost.tiangolo.com",
+        "http://localhost",
+        "http://localhost:8080",
+        "*",  # allow all origins
+    ]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # compresses responses
+    # Handles GZip responses for any request that includes "gzip" in the Accept-Encoding header
+    app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
 
     # slowapi, based on ip address
     app.state.limiter = limiter
