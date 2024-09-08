@@ -46,6 +46,7 @@ opentelemetry-exporter-otlp = "^1.26.0"
 opentelemetry-instrumentation-fastapi = "^0.47b0"
 pyjwt = "^2.9.0"
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+orjson = "^3.10.7"
 
 [tool.poetry.extras]
 dev_types = ["types-python-dateutil", "types-pytz", "types-PyYAML"]

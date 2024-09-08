@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Callable, TypeVar, cast
 
 from fastapi import FastAPI, Request, status
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import ORJSONResponse, Response
 from redis.asyncio import Redis, from_url
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -48,7 +48,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
     @tracer.start_as_current_span("middleware - checking user rate limit")
-    async def rate_limit_user(self, user: str, rate_limit: int) -> JSONResponse | None:
+    async def rate_limit_user(
+        self, user: str, rate_limit: int
+    ) -> ORJSONResponse | None:
         """
         Apply rate limiting per user, per minute
         """
@@ -70,7 +72,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Check rate limit
         if current_count > rate_limit:
-            return JSONResponse(
+            return ORJSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 content={"detail": "User Rate Limit Exceeded"},
                 headers={

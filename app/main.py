@@ -7,6 +7,7 @@ from alembic.config import Config
 from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import ORJSONResponse
 from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi import _rate_limit_exceeded_handler  # noqa: PLC2701
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
         docs_url="/docs",  # interactive API documentation
         redoc_url="/redoc",  # alternative automatic interactive API documentation
         lifespan=lifespan,
+        default_response_class=ORJSONResponse,
     )
     # CORS (Cross-Origin Resource Sharing)
     origins = [
