@@ -21,6 +21,8 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl=f"{get_settings().API_ROOT_PATH}/auth/token"
 )
 
+TokenDep = Annotated[str, Depends(oauth2_scheme)]
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
@@ -68,9 +70,7 @@ def create_access_token(
     return encoded_jwt
 
 
-async def get_current_user(
-    session: SessionDep, token: Annotated[str, Depends(oauth2_scheme)]
-) -> User:
+async def get_current_user(session: SessionDep, token: TokenDep) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -90,11 +90,17 @@ async def get_current_user(
     return user
 
 
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: CurrentUserDep,
 ):
     if current_user.disabled:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
     return current_user
+
+
+CurrentActiveUserDep = Annotated[User, Depends(get_current_active_user)]

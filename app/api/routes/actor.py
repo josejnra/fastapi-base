@@ -7,6 +7,7 @@ from sqlmodel import func, select
 
 from app.core.database import SessionDep
 from app.core.logger import logger
+from app.core.security import CurrentActiveUserDep
 from app.core.telemetry import meter, tracer
 from app.models import Actor, ActorMovie
 from app.schemas import ActorParam, ActorResponse, ActorResponseDetailed
@@ -60,6 +61,7 @@ async def create_actor(
 @router.get("/", response_model=ActorResponse, status_code=status.HTTP_200_OK)
 async def get_actors(
     session: SessionDep,
+    _: CurrentActiveUserDep,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
 ):

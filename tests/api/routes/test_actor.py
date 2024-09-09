@@ -58,13 +58,17 @@ async def test_create_actor_too_many_fields(
     assert response.status_code == status.HTTP_201_CREATED
 
 
-async def test_get_actor(async_client: AsyncClient, seed_addresses: list[Address]):
+async def test_get_actor(
+    async_client: AsyncClient,
+    auth_header: dict[str, str],
+    seed_addresses: list[Address],
+):
     """Successfully retrieve an actor."""
     # actor with 1 address
     count_addresses = 1
     first_actor = seed_addresses[1].actor
     response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/actors/{first_actor.id}"
+        f"{get_settings().API_ROOT_PATH}/actors/{first_actor.id}", headers=auth_header
     )
     response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
@@ -76,7 +80,7 @@ async def test_get_actor(async_client: AsyncClient, seed_addresses: list[Address
     count_addresses = 2
     first_actor = seed_addresses[0].actor
     response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/actors/{first_actor.id}"
+        f"{get_settings().API_ROOT_PATH}/actors/{first_actor.id}", headers=auth_header
     )
     response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
@@ -85,19 +89,27 @@ async def test_get_actor(async_client: AsyncClient, seed_addresses: list[Address
     assert len(response_json["addresses"]) == count_addresses
 
 
-async def test_get_actor_not_found(async_client: AsyncClient):
+async def test_get_actor_not_found(
+    async_client: AsyncClient, auth_header: dict[str, str]
+):
     """When an actor is not found."""
-    response = await async_client.get(f"{get_settings().API_ROOT_PATH}/actors/{99999}")
+    response = await async_client.get(
+        f"{get_settings().API_ROOT_PATH}/actors/{99999}", headers=auth_header
+    )
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.parametrize("seed_actors", [0, 1, 5], indirect=True)
-async def test_get_actors(async_client: AsyncClient, seed_actors: list[Actor]):
+async def test_get_actors(
+    async_client: AsyncClient, auth_header: dict[str, str], seed_actors: list[Actor]
+):
     """Get list of actors for 0, 1 and many actors."""
     movie_list_len = 0
 
     # no params
-    response = await async_client.get(f"{get_settings().API_ROOT_PATH}/actors/")
+    response = await async_client.get(
+        f"{get_settings().API_ROOT_PATH}/actors/", headers=auth_header
+    )
     response_json = response.json()
     assert response.status_code == status.HTTP_200_OK
     assert response_json["total"] == len(seed_actors)
@@ -108,7 +120,9 @@ async def test_get_actors(async_client: AsyncClient, seed_actors: list[Actor]):
     # set page size
     page_size = 1
     response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/actors/", params={"page_size": page_size}
+        f"{get_settings().API_ROOT_PATH}/actors/",
+        headers=auth_header,
+        params={"page_size": page_size},
     )
     response_json = response.json()
 
@@ -122,14 +136,16 @@ async def test_get_actors(async_client: AsyncClient, seed_actors: list[Actor]):
 
 
 async def test_get_actors_wrong_page_values(
-    async_client: AsyncClient, seed_actors: list[Actor]
+    async_client: AsyncClient, auth_header: dict[str, str], seed_actors: list[Actor]
 ):
     """Validate wrong param when getting actors."""
     print(f"seed_actors: {len(seed_actors)}")
     # page size is 0
     page_size = 0
     response = await async_client.get(
-        f"{get_settings().API_ROOT_PATH}/actors/", params={"page_size": page_size}
+        f"{get_settings().API_ROOT_PATH}/actors/",
+        headers=auth_header,
+        params={"page_size": page_size},
     )
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

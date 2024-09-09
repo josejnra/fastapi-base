@@ -110,6 +110,24 @@ async def seed_users(
 
 
 @pytest.fixture
+async def auth_header(
+    async_client: AsyncClient, seed_users: list[User]
+) -> dict[str, str]:
+    """Fixture to get token."""
+    user = seed_users[0]  # admin user
+    login_data = {
+        "username": user.username,
+        "password": "123",
+    }
+    response = await async_client.post(
+        f"{get_settings().API_ROOT_PATH}/auth/token", data=login_data
+    )
+    response_json = response.json()
+
+    return {"Authorization": f"Bearer {response_json['access_token']}"}
+
+
+@pytest.fixture
 async def seed_actors(
     request: pytest.FixtureRequest, db_session: AsyncSession
 ) -> list[Actor]:

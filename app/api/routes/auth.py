@@ -7,11 +7,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.core.config import get_settings
 from app.core.database import SessionDep
 from app.core.security import (
+    CurrentActiveUserDep,
     authenticate_user,
     create_access_token,
-    get_current_active_user,
 )
-from app.models import User
 from app.schemas import Token
 
 router = APIRouter()
@@ -38,6 +37,6 @@ async def login_for_access_token(
 
 @router.get("/me", status_code=status.HTTP_200_OK)
 async def auth(
-    current_user: Annotated[User, Depends(get_current_active_user)],
+    current_user: CurrentActiveUserDep,
 ):
     return {"message": f"User {current_user.username} authenticated"}
