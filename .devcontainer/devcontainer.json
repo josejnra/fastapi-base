@@ -55,7 +55,10 @@
 				"[python]": {
 					"editor.defaultFormatter": "charliermarsh.ruff",
 					"source.organizeImports": "explicit"
-				}				
+				},
+				"python.analysis.autoImportCompletions": true,
+				"python.analysis.autoImportUserSymbols": true,
+				"python.analysis.indexing": true				
 			}
 		}
 	},
