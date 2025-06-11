@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable
 
 import pytest
 import pytest_asyncio

@@ -1,5 +1,6 @@
 import asyncio
-from typing import AsyncGenerator, cast
+from collections.abc import AsyncGenerator
+from typing import cast
 
 from faker import Faker
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -43,6 +44,7 @@ async def seed_data():
         session.add(user)
         await session.commit()
         await session.refresh(user)
+        print(f"Initial user '{user.name}' created successfully.")
 
     # create actors
     fake = Faker()
@@ -55,6 +57,7 @@ async def seed_data():
         await session.commit()
         for actor in actors:
             await session.refresh(actor)
+            print(f"Actor {actor.name} created successfully.")
 
     # create addresses
     addresses = [
@@ -83,6 +86,7 @@ async def seed_data():
     async for session in get_session(engine):
         session.add_all(addresses)
         await session.commit()
+        print("Address for first actor created successfully.")
 
     # create movies
     movies = [
@@ -99,11 +103,12 @@ async def seed_data():
         await session.commit()
         for movie in movies:
             await session.refresh(movie)
+            print(f"Movie '{movie.title}' created successfully.")
 
     # adds 1 actor per movie, except for the last one
     actor_movies = [
         ActorMovie(actor=actor, movie=movie)
-        for movie, actor in zip(movies[:-1], actors[:-1])
+        for movie, actor in zip(movies[:-1], actors[:-1], strict=False)
     ]
 
     actor_movies.extend([ActorMovie(actor=actors[-1], movie=movies[-1])])
@@ -111,6 +116,7 @@ async def seed_data():
     async for session in get_session(engine):
         session.add_all(actor_movies)
         await session.commit()
+        print("Actor-Movie relations created successfully.")
 
     print("Data seeded successfully.")
 

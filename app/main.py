@@ -1,6 +1,7 @@
 import asyncio
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from alembic import command
 from alembic.config import Config
@@ -12,11 +13,16 @@ from opentelemetry import trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from slowapi import _rate_limit_exceeded_handler  # noqa: PLC2701
 from slowapi.errors import RateLimitExceeded
+from starlette.middleware import Middleware
 
 from app.api import main
 from app.core.config import get_settings
 from app.core.database import init_db
-from app.core.limiter import RateLimitMiddleware, limiter
+from app.core.limiter import (
+    RateLimitMiddleware,
+    limiter,
+    redis_user_rate_limiter_factory,
+)
 from app.core.logger import logger
 from app.core.telemetry import meter, tracer
 from app.models import (  # noqa: F401  # needed for sqlmodel in order to create tables
@@ -55,6 +61,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
 
     yield
 
+    logger.info("Shutting down application...")
+
 
 @logger.catch
 def create_app() -> FastAPI:
@@ -63,15 +71,6 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: FastAPI application
     """
-    app = FastAPI(
-        title="Base code for FastAPI projects",
-        description="My FastAPI description",
-        openapi_url="/docs/openapi.json",
-        docs_url="/docs",  # interactive API documentation
-        redoc_url="/redoc",  # alternative automatic interactive API documentation
-        lifespan=lifespan,
-        default_response_class=ORJSONResponse,
-    )
     # CORS (Cross-Origin Resource Sharing)
     origins = [
         "http://localhost.tiangolo.com",
@@ -81,27 +80,38 @@ def create_app() -> FastAPI:
         "*",  # allow all origins
     ]
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    middlewares = [
+        Middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        ),
+        # compresses responses
+        # Handles GZip responses for any request that includes "gzip" in the Accept-Encoding header
+        Middleware(GZipMiddleware, minimum_size=1000, compresslevel=5),
+        # redis's rate limiter, based on username
+        Middleware(
+            RateLimitMiddleware,
+            rate_limiter_factory=redis_user_rate_limiter_factory,
+        ),
+    ]
 
-    # compresses responses
-    # Handles GZip responses for any request that includes "gzip" in the Accept-Encoding header
-    app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=5)
+    app = FastAPI(
+        title="Base code for FastAPI projects",
+        description="My FastAPI description",
+        openapi_url="/docs/openapi.json",
+        docs_url="/docs",  # interactive API documentation
+        redoc_url="/redoc",  # alternative automatic interactive API documentation
+        lifespan=lifespan,
+        default_response_class=ORJSONResponse,
+        middleware=middlewares,
+    )
 
     # slowapi, based on ip address
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore
-
-    # redis's rate limiter, based on username
-    app.add_middleware(
-        RateLimitMiddleware,
-        rate_limit_per_minute=get_settings().RATE_LIMIT,
-    )
 
     # instrument the app
     FastAPIInstrumentor.instrument_app(app)

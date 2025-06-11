@@ -7,8 +7,16 @@ docker-compose up -d
 ```
 The application should be available at [0.0.0.0:8000](http://0.0.0.0:8000).
 
+### Seed data
+It's necessary to seed the database with some data, especially for having a user in order to authenticate.
+
+```shell
+python seed.py
+```
 
 ### Migrations
+
+When running the application with docker compose it automatically runs the migrations.
 
 #### Init alembic
 ```shell

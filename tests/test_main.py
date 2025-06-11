@@ -1,7 +1,7 @@
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from fastapi import status
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 from redis.asyncio import Redis
 
 from app.main import create_app
@@ -19,8 +19,9 @@ async def test_lifespan(monkeypatch: MonkeyPatch):
 
     app = create_app()
 
+    transport = ASGITransport(app=app)
     # AsyncClient to simulate a lifespan being applied
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.get("/docs")
 
     assert response.status_code == status.HTTP_200_OK
