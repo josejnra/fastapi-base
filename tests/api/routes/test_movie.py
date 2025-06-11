@@ -9,14 +9,19 @@ from app.core.config import get_settings
 from app.models import Actor, Movie
 from app.schemas import MovieResponseDetailed
 
-# make all test mark with `asyncio`
+# Mark all tests in this module as asyncio
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture
 def fake_movie() -> dict[str, Any]:
-    fake = Faker()
+    """
+    Provides a fake movie dictionary for testing.
 
+    Returns:
+        dict[str, Any]: A dictionary with random movie fields.
+    """
+    fake = Faker()
     return {
         "title": fake.street_name(),
         "year": fake.random_int(min=1920, max=2025),
@@ -27,7 +32,7 @@ def fake_movie() -> dict[str, Any]:
 @pytest.mark.parametrize(
     "actors_list, expected_count",  # noqa: PT006
     [
-        ([], 0),  # no  actors
+        ([], 0),  # no actors
         ([1], 1),  # 1 actor
         ([1, 2, 3], 3),  # many actors
     ],
@@ -39,7 +44,20 @@ async def test_create_movie(
     actors_list: list[int],
     expected_count: int,
 ):
-    """Create movie with different number of actors for each."""
+    """
+    Test creating a movie with different numbers of actors.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        fake_movie (dict[str, Any]): The fake movie data.
+        seed_actors (list[Actor]): List of seeded actors.
+        actors_list (list[int]): List of actor IDs to associate.
+        expected_count (int): Expected number of actors in the response.
+
+    Asserts:
+        - Status code is 201 CREATED.
+        - Response contains correct movie fields and actor count.
+    """
     print(f"seed_actors: {len(seed_actors)}")
     fake_movie["actors"] = actors_list
     response = await async_client.post(
@@ -54,7 +72,15 @@ async def test_create_movie(
 
 
 async def test_create_movie_missing_field(async_client: AsyncClient):
-    """Fail to create an movie with missing field."""
+    """
+    Test failure to create a movie with a missing field.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+
+    Asserts:
+        - Status code is 422 UNPROCESSABLE ENTITY.
+    """
     fake = Faker()
     movie = {"name": fake.name()}
     response = await async_client.post(
@@ -67,7 +93,16 @@ async def test_create_movie_missing_field(async_client: AsyncClient):
 async def test_create_movie_too_many_fields(
     async_client: AsyncClient, fake_movie: dict[str, Any]
 ):
-    """Fail to create an movie with too many field."""
+    """
+    Test creating a movie with extra fields (should ignore extras).
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        fake_movie (dict[str, Any]): The fake movie data.
+
+    Asserts:
+        - Status code is 201 CREATED.
+    """
     fake_movie["new_field_1"] = "new_field_1"
     fake_movie["new_field_2"] = "new_field_2"
     response = await async_client.post(
@@ -90,7 +125,19 @@ async def test_get_movie(
     movie_index: int,
     expected_actors_count: int,
 ):
-    """Successfully retrieve a movie."""
+    """
+    Test successfully retrieving a movie by ID.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        seed_movies (list[Movie]): List of seeded movies.
+        movie_index (int): Index of the movie to retrieve.
+        expected_actors_count (int): Expected number of actors in the movie.
+
+    Asserts:
+        - Status code is 200 OK.
+        - Response contains correct movie ID and actor count.
+    """
     print(f"seed_movies: {len(seed_movies)}")
     movie = seed_movies[movie_index]
     response = await async_client.get(
@@ -103,14 +150,33 @@ async def test_get_movie(
 
 
 async def test_get_movie_not_found(async_client: AsyncClient):
-    """When an movie is not found."""
+    """
+    Test retrieving a non-existent movie returns 404.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+
+    Asserts:
+        - Status code is 404 NOT FOUND.
+    """
     response = await async_client.get(f"{get_settings().API_ROOT_PATH}/movies/{99999}")
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.parametrize("seed_movies", [0, 1, 5], indirect=True)
 async def test_get_movies(async_client: AsyncClient, seed_movies: list[Movie]):
-    """Get list of movies for 0, 1 and many movies."""
+    """
+    Test retrieving a list of movies for 0, 1, and many movies.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        seed_movies (list[Movie]): List of seeded movies.
+
+    Asserts:
+        - Status code is 200 OK.
+        - Response contains correct total and page size.
+        - Actors list is empty for each movie.
+    """
     print(f"seed_movies: {len(seed_movies)}")
     actors_list_len = 0
 
@@ -142,7 +208,16 @@ async def test_get_movies(async_client: AsyncClient, seed_movies: list[Movie]):
 async def test_get_movies_wrong_page_values(
     async_client: AsyncClient, seed_movies: list[Movie]
 ):
-    """Validate wrong param when getting movies."""
+    """
+    Test validation for wrong page size parameter when getting movies.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        seed_movies (list[Movie]): List of seeded movies.
+
+    Asserts:
+        - Status code is 422 UNPROCESSABLE ENTITY for invalid page size.
+    """
     print(f"seed_actors: {len(seed_movies)}")
     # page size is 0
     page_size = 0

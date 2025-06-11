@@ -15,11 +15,15 @@ from app.core.telemetry import tracer
 
 @lru_cache
 def get_engine() -> AsyncEngine:
-    """Get SQLAlchemy engine from database URL.
+    """
+    Returns a cached SQLAlchemy AsyncEngine instance for the configured database.
+
+    This function creates and returns an asynchronous SQLAlchemy engine using the database URL
+    and debug settings from the application configuration. The engine is cached to avoid
+    unnecessary re-creation and to maintain a pool of database connections.
 
     Returns:
-        AsyncEngine: object that handles the communication with the database.
-        Maintains a pool of database connections.
+        AsyncEngine: An asynchronous SQLAlchemy engine instance.
     """
     settings = get_settings()
     db_url = settings.DATABASE
@@ -30,14 +34,20 @@ def get_engine() -> AsyncEngine:
 
 
 async def init_db():
-    """It takes an engine and uses it to create the database
-    and all the tables registered in this MetaData object if not exists.
+    """
+    Initializes the database schema and tables if they do not exist.
 
+    This function connects to the database using the engine and creates the schema (if not using SQLite)
+    and all tables registered in the SQLModel metadata. For databases that support schemas, it ensures
+    the schema exists before creating tables.
+
+    Returns:
+        None
     """
     logger.info("Initializing database")
     engine = get_engine()
     async with engine.begin() as conn:
-        # sqlite doesn't support schema creation
+        # SQLite does not support schema creation
         if not get_settings().is_sqlite_database():
             schema = get_settings().SCHEMA
             SQLModel.metadata.schema = schema
@@ -49,16 +59,20 @@ async def init_db():
 
 @tracer.start_as_current_span("getting db session")
 async def get_db_session() -> AsyncSession:
-    """It takes an engine and uses it to create a session
-        that will be used to interact with the database.
+    """
+    Provides an asynchronous database session for use in dependency injection.
+
+    This function creates and returns an AsyncSession instance using the cached engine.
+    The session is configured with expire_on_commit=False to prevent attribute expiration
+    after commit, which is useful for async workflows.
+    Object that establishes all conversations with the database and represents
+    a "holding zone" for all the objects which you've loaded or associated with it during its lifespan.
 
     Returns:
-        Generator[AsyncSession, None, None]: object that establishes all conversations with the database
-        and represents a "holding zone" for all the objects which you've loaded or associated with it during its lifespan.
+        AsyncSession: An asynchronous SQLAlchemy session instance.
     """
     engine = get_engine()
 
-    # expire_on_commit=False will prevent attributes from being expired after commit.
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)  # type: ignore
     return cast(AsyncSession, async_session())
 

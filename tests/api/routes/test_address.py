@@ -10,7 +10,7 @@ from app.core.config import get_settings
 from app.models import Actor, Address
 from app.schemas import AddressResponseDetailed
 
-# make all test mark with `asyncio`
+# Mark all tests in this module as asyncio
 pytestmark = pytest.mark.asyncio
 
 
@@ -18,7 +18,16 @@ pytestmark = pytest.mark.asyncio
 async def seed_addresses_by_1_actor(
     request: pytest.FixtureRequest, db_session: AsyncSession
 ) -> list[Address]:
-    """Fixture to addresses for 1 actor."""
+    """
+    Fixture to seed addresses for a single actor.
+
+    Args:
+        request (pytest.FixtureRequest): The pytest request object, uses .param for address count.
+        db_session (AsyncSession): The database session.
+
+    Returns:
+        list[Address]: List of created Address objects.
+    """
     count_addresses = request.param
 
     fake = Faker()
@@ -50,8 +59,13 @@ async def seed_addresses_by_1_actor(
 
 @pytest.fixture
 def fake_address() -> dict[str, Any]:
-    fake = Faker()
+    """
+    Provides a fake address dictionary for testing.
 
+    Returns:
+        dict[str, Any]: A dictionary with random address fields.
+    """
+    fake = Faker()
     return {
         "country": fake.country(),
         "city": fake.city(),
@@ -65,7 +79,19 @@ def fake_address() -> dict[str, Any]:
 async def test_create_address_success(
     async_client: AsyncClient, fake_address: dict[str, Any], seed_actors: list[Actor]
 ):
-    """address is created successfully."""
+    """
+    Test that an address is created successfully.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        fake_address (dict[str, Any]): The fake address data.
+        seed_actors (list[Actor]): List of seeded actors.
+
+    Asserts:
+        - Status code is 201 CREATED.
+        - Response contains correct address fields.
+        - Actor is not None.
+    """
     print(f"seed_actors: {len(seed_actors)}")
     response = await async_client.post(
         f"{get_settings().API_ROOT_PATH}/addresses/", json=fake_address
@@ -82,7 +108,15 @@ async def test_create_address_success(
 
 
 async def test_create_address_missing_field(async_client: AsyncClient):
-    """Fail to create an address with missing field."""
+    """
+    Test failure to create an address with a missing field.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+
+    Asserts:
+        - Status code is 422 UNPROCESSABLE ENTITY.
+    """
     fake = Faker()
     address = {"name": fake.name()}
     response = await async_client.post(
@@ -95,7 +129,17 @@ async def test_create_address_missing_field(async_client: AsyncClient):
 async def test_create_address_too_many_fields(
     async_client: AsyncClient, fake_address: dict[str, Any], seed_actors: list[Actor]
 ):
-    """Fail to create an address with too many field."""
+    """
+    Test creating an address with extra fields (should ignore extras).
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        fake_address (dict[str, Any]): The fake address data.
+        seed_actors (list[Actor]): List of seeded actors.
+
+    Asserts:
+        - Status code is 201 CREATED.
+    """
     print(f"seed_actors: {len(seed_actors)}")
     fake_address["new_field_1"] = "new_field_1"
     fake_address["new_field_2"] = "new_field_2"
@@ -106,7 +150,16 @@ async def test_create_address_too_many_fields(
 
 
 async def test_get_address(async_client: AsyncClient, seed_addresses: list[Address]):
-    """Successfully retrieve an address."""
+    """
+    Test successfully retrieving an address by ID.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        seed_addresses (list[Address]): List of seeded addresses.
+
+    Asserts:
+        - Status code is 200 OK.
+    """
     print(f"seed_actors: {len(seed_addresses)}")
     response = await async_client.get(
         f"{get_settings().API_ROOT_PATH}/addresses/{seed_addresses[0].id}"
@@ -116,7 +169,15 @@ async def test_get_address(async_client: AsyncClient, seed_addresses: list[Addre
 
 
 async def test_get_address_not_found(async_client: AsyncClient):
-    """When an address is not found."""
+    """
+    Test retrieving a non-existent address returns 404.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+
+    Asserts:
+        - Status code is 404 NOT FOUND.
+    """
     response = await async_client.get(
         f"{get_settings().API_ROOT_PATH}/addresses/{99999}"
     )
@@ -127,7 +188,18 @@ async def test_get_address_not_found(async_client: AsyncClient):
 async def test_get_addresses(
     async_client: AsyncClient, seed_addresses_by_1_actor: list[Address]
 ):
-    """Get list of addresses for 0, 1 and many addresses."""
+    """
+    Test retrieving a list of addresses for 0, 1, and many addresses.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        seed_addresses_by_1_actor (list[Address]): List of seeded addresses.
+
+    Asserts:
+        - Status code is 200 OK.
+        - Response contains correct total and page size.
+        - Actor is None in the response.
+    """
     print(f"seed_addresses_by_1_actor: {len(seed_addresses_by_1_actor)}")
 
     # no params

@@ -20,6 +20,12 @@ from app.models import Actor, ActorMovie, Address, Movie, User
 
 @pytest_asyncio.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Provides an in-memory SQLite database session for testing.
+
+    Yields:
+        AsyncSession: An asynchronous SQLAlchemy session instance.
+    """
     engine = create_async_engine(
         "sqlite+aiosqlite:///:memory:",
         echo=False,
@@ -40,6 +46,16 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 def override_get_db(
     db_session: AsyncSession,
 ) -> Callable[[], AsyncGenerator[AsyncSession, None]]:
+    """
+    Provides a dependency override for the database session.
+
+    Args:
+        db_session (AsyncSession): The database session to yield.
+
+    Returns:
+        Callable: A function yielding the provided session.
+    """
+
     async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
@@ -50,13 +66,30 @@ def override_get_db(
 def test_app(
     override_get_db: Callable[[], AsyncGenerator[AsyncSession, None]],
 ) -> FastAPI:
-    app.dependency_overrides[get_db_session] = override_get_db
+    """
+    Provides a FastAPI app instance with overridden database dependency.
 
+    Args:
+        override_get_db (Callable): The database session override.
+
+    Returns:
+        FastAPI: The FastAPI app instance.
+    """
+    app.dependency_overrides[get_db_session] = override_get_db
     return app
 
 
 @pytest_asyncio.fixture
 async def async_client(test_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
+    """
+    Provides an asynchronous HTTP client for testing.
+
+    Args:
+        test_app (FastAPI): The FastAPI app instance.
+
+    Yields:
+        AsyncClient: An HTTPX asynchronous client.
+    """
     async with AsyncClient(
         transport=ASGITransport(test_app),  # type: ignore
         base_url="http://test",
@@ -69,14 +102,15 @@ async def async_client(test_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 async def seed_users(
     request: pytest.FixtureRequest, db_session: AsyncSession
 ) -> list[User]:
-    """Fixture to seed users.
+    """
+    Seeds the database with users for testing.
 
     Args:
-        request (pytest.FixtureRequest): number of users to create, defaults to 1.
-        db_session (AsyncSession): database session
+        request (pytest.FixtureRequest): Number of users to create, defaults to 1.
+        db_session (AsyncSession): Database session.
 
     Returns:
-        list[User]: list of users
+        list[User]: List of created users.
     """
     n = getattr(request, "param", 1)
     fake = Faker()
@@ -113,7 +147,16 @@ async def seed_users(
 async def auth_header(
     async_client: AsyncClient, seed_users: list[User]
 ) -> dict[str, str]:
-    """Fixture to get token."""
+    """
+    Provides an authentication header for the seeded admin user.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        seed_users (list[User]): List of seeded users.
+
+    Returns:
+        dict[str, str]: Authorization header with Bearer token.
+    """
     user = seed_users[0]  # admin user
     login_data = {
         "username": user.username,
@@ -131,14 +174,15 @@ async def auth_header(
 async def seed_actors(
     request: pytest.FixtureRequest, db_session: AsyncSession
 ) -> list[Actor]:
-    """Fixture to seed actors.
+    """
+    Seeds the database with actors for testing.
 
     Args:
-        request (pytest.FixtureRequest): number of actors to create, defaults to 3.
-        db_session (AsyncSession): database session
+        request (pytest.FixtureRequest): Number of actors to create, defaults to 3.
+        db_session (AsyncSession): Database session.
 
     Returns:
-        list[Actor]: list of actors
+        list[Actor]: List of created actors.
     """
     n = getattr(request, "param", 3)
     fake = Faker()
@@ -158,7 +202,16 @@ async def seed_actors(
 async def seed_addresses(
     db_session: AsyncSession, seed_actors: list[Actor]
 ) -> list[Address]:
-    """Fixture to seed addresses."""
+    """
+    Seeds the database with addresses for testing.
+
+    Args:
+        db_session (AsyncSession): Database session.
+        seed_actors (list[Actor]): List of actors to associate addresses with.
+
+    Returns:
+        list[Address]: List of created addresses.
+    """
     fake = Faker()
     min_actors = 2
     if len(seed_actors) < min_actors:
@@ -200,16 +253,18 @@ async def seed_addresses(
 async def seed_movies(
     request: pytest.FixtureRequest, db_session: AsyncSession, seed_actors: list[Actor]
 ) -> list[Movie]:
-    """Fixture to seed movies.
+    """
+    Seeds the database with movies for testing.
+
     Args:
-        request (pytest.FixtureRequest): number of movies to create, defaults to 4. Must be >= 2
-        db_session (AsyncSession): database session
-        seed_actors (list[Actor]): list of actors to use
+        request (pytest.FixtureRequest): Number of movies to create, defaults to 4. Must be >= 2.
+        db_session (AsyncSession): Database session.
+        seed_actors (list[Actor]): List of actors to use.
 
     Returns:
-        list[Movie]: list of movies.
-            when n = 1: list of 1 movie with 1 actor
-            when n>= 2: First movie has actors 1, 2, 3, last one has no actors.
+        list[Movie]: List of created movies.
+            When n = 1: list of 1 movie with 1 actor.
+            When n >= 2: First movie has actors 1, 2, 3, last one has no actors.
     """
     n = getattr(request, "param", 4)
     fake = Faker()
@@ -266,6 +321,11 @@ async def seed_movies(
 
 @pytest.fixture
 def redis_client() -> Redis:
-    redis_url = get_settings().REDIS_URL
+    """
+    Provides a Redis client instance for testing.
 
+    Returns:
+        Redis: An asynchronous Redis client.
+    """
+    redis_url = get_settings().REDIS_URL
     return from_url(redis_url)

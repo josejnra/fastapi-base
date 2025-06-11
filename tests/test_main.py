@@ -6,12 +6,21 @@ from redis.asyncio import Redis
 
 from app.main import create_app
 
-# make all test mark with `asyncio`
+# Mark all tests in this module as asyncio
 pytestmark = pytest.mark.asyncio
 
 
 async def test_lifespan(monkeypatch: MonkeyPatch):
-    # Mocker run_migrations in order to make sure it's being called, but do nothing
+    """
+    Tests the FastAPI application lifespan event by mocking the run_migrations function.
+
+    Args:
+        monkeypatch (MonkeyPatch): Pytest monkeypatch fixture for patching functions.
+
+    Asserts:
+        - The /docs endpoint returns HTTP 200 OK.
+    """
+
     async def mock_run_migrations():
         print("Mocked run_migrations called")
 
@@ -28,6 +37,16 @@ async def test_lifespan(monkeypatch: MonkeyPatch):
 
 
 async def test_slowapi(async_client: AsyncClient):
+    """
+    Tests the IP-based rate limiting using slowapi.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+
+    Asserts:
+        - The root endpoint returns HTTP 200 OK for the first 5 requests.
+        - The 6th request returns HTTP 429 TOO MANY REQUESTS.
+    """
     for _ in range(5):
         response = await async_client.get("/")
         assert response.status_code == status.HTTP_200_OK
@@ -38,6 +57,17 @@ async def test_slowapi(async_client: AsyncClient):
 
 
 async def test_redis_rate_limiter(async_client: AsyncClient, redis_client: Redis):
+    """
+    Tests the Redis-based user rate limiter middleware.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        redis_client (Redis): The Redis client.
+
+    Asserts:
+        - The /health endpoint returns HTTP 200 OK for the first 5 requests with the same user.
+        - The 6th request returns HTTP 429 TOO MANY REQUESTS.
+    """
     # delete all keys
     await redis_client.flushall()
 

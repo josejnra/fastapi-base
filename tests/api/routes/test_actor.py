@@ -9,21 +9,37 @@ from app.core.config import get_settings
 from app.models import Actor, Address
 from app.schemas import ActorResponseDetailed
 
-# make all test mark with `asyncio`
+# Mark all tests in this module as asyncio
 pytestmark = pytest.mark.asyncio
 
 
 @pytest.fixture
 def fake_actor() -> dict[str, Any]:
-    fake = Faker()
+    """
+    Provides a fake actor dictionary for testing.
 
+    Returns:
+        dict[str, Any]: A dictionary with random name and age.
+    """
+    fake = Faker()
     return {"name": fake.name(), "age": fake.random_int(min=18, max=100)}
 
 
 async def test_create_actor_success(
     async_client: AsyncClient, fake_actor: dict[str, Any]
 ):
-    """Actor is created successfully."""
+    """
+    Test that an actor is created successfully.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        fake_actor (dict[str, Any]): The fake actor data.
+
+    Asserts:
+        - Status code is 201 CREATED.
+        - Response contains correct name and age.
+        - Movies and addresses lists are empty.
+    """
     response = await async_client.post(
         f"{get_settings().API_ROOT_PATH}/actors/", json=fake_actor
     )
@@ -36,7 +52,15 @@ async def test_create_actor_success(
 
 
 async def test_create_actor_missing_field(async_client: AsyncClient):
-    """Fail to create an actor with missing field."""
+    """
+    Test failure to create an actor with a missing field.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+
+    Asserts:
+        - Status code is 422 UNPROCESSABLE ENTITY.
+    """
     fake = Faker()
     actor = {"name": fake.name()}
     response = await async_client.post(
@@ -49,7 +73,16 @@ async def test_create_actor_missing_field(async_client: AsyncClient):
 async def test_create_actor_too_many_fields(
     async_client: AsyncClient, fake_actor: dict[str, Any]
 ):
-    """Fail to create an actor with too many field."""
+    """
+    Test creating an actor with extra fields (should ignore extras).
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        fake_actor (dict[str, Any]): The fake actor data.
+
+    Asserts:
+        - Status code is 201 CREATED.
+    """
     fake_actor["new_field_1"] = "new_field_1"
     fake_actor["new_field_2"] = "new_field_2"
     response = await async_client.post(
@@ -63,7 +96,18 @@ async def test_get_actor(
     auth_header: dict[str, str],
     seed_addresses: list[Address],
 ):
-    """Successfully retrieve an actor."""
+    """
+    Test successfully retrieving an actor by ID.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        auth_header (dict[str, str]): Authorization header.
+        seed_addresses (list[Address]): Seeded addresses.
+
+    Asserts:
+        - Status code is 200 OK.
+        - Response contains correct actor ID and address count.
+    """
     # actor with 1 address
     count_addresses = 1
     first_actor = seed_addresses[1].actor
@@ -92,7 +136,16 @@ async def test_get_actor(
 async def test_get_actor_not_found(
     async_client: AsyncClient, auth_header: dict[str, str]
 ):
-    """When an actor is not found."""
+    """
+    Test retrieving a non-existent actor returns 404.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        auth_header (dict[str, str]): Authorization header.
+
+    Asserts:
+        - Status code is 404 NOT FOUND.
+    """
     response = await async_client.get(
         f"{get_settings().API_ROOT_PATH}/actors/{99999}", headers=auth_header
     )
@@ -103,7 +156,19 @@ async def test_get_actor_not_found(
 async def test_get_actors(
     async_client: AsyncClient, auth_header: dict[str, str], seed_actors: list[Actor]
 ):
-    """Get list of actors for 0, 1 and many actors."""
+    """
+    Test retrieving a list of actors for 0, 1, and many actors.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        auth_header (dict[str, str]): Authorization header.
+        seed_actors (list[Actor]): Seeded actors.
+
+    Asserts:
+        - Status code is 200 OK.
+        - Response contains correct total and page size.
+        - Movies list is empty for each actor.
+    """
     movie_list_len = 0
 
     # no params
@@ -138,7 +203,17 @@ async def test_get_actors(
 async def test_get_actors_wrong_page_values(
     async_client: AsyncClient, auth_header: dict[str, str], seed_actors: list[Actor]
 ):
-    """Validate wrong param when getting actors."""
+    """
+    Test validation for wrong page size parameter when getting actors.
+
+    Args:
+        async_client (AsyncClient): The HTTPX async client.
+        auth_header (dict[str, str]): Authorization header.
+        seed_actors (list[Actor]): Seeded actors.
+
+    Asserts:
+        - Status code is 422 UNPROCESSABLE ENTITY for invalid page size.
+    """
     print(f"seed_actors: {len(seed_actors)}")
     # page size is 0
     page_size = 0

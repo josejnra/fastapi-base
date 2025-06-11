@@ -36,6 +36,15 @@ from app.models import (  # noqa: F401  # needed for sqlmodel in order to create
 
 @logger.catch
 async def run_migrations():
+    """
+    Runs Alembic migrations to upgrade the database schema to the latest version.
+
+    This function configures Alembic using the migration script location and
+    executes the upgrade command in a separate thread.
+
+    Returns:
+        None
+    """
     logger.info("Running migrations")
     alembic_cfg = Config()
     alembic_cfg.set_main_option("script_location", "app/migrations")
@@ -45,13 +54,20 @@ async def run_migrations():
 @logger.catch
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
-    """Run tasks before and after the server starts.
+    """
+    Context manager for FastAPI application lifespan events.
+
+    Runs database initialization or migrations before the application starts,
+    and logs shutdown information after the application stops.
 
     Args:
-        app (FastAPI): implicit FastAPI application
+        app (FastAPI): The FastAPI application instance.
+
+    Yields:
+        None
 
     Returns:
-        AsyncGenerator[Any, None]: application
+        AsyncGenerator[Any, None]: The application context.
     """
     # applying migrations implies using a schema, which sqlite doesn't support
     if get_settings().is_sqlite_database():
@@ -66,10 +82,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[Any, None]:  # noqa: ARG001
 
 @logger.catch
 def create_app() -> FastAPI:
-    """Create FastAPI application.
+    """
+    Creates and configures the FastAPI application instance.
+
+    Sets up CORS, GZip, and custom rate limiting middleware, configures API docs,
+    adds exception handlers, instruments the app for telemetry, and includes routers.
 
     Returns:
-        FastAPI: FastAPI application
+        FastAPI: The configured FastAPI application instance.
     """
     # CORS (Cross-Origin Resource Sharing)
     origins = [
@@ -127,11 +147,31 @@ app = create_app()
 @app.get("/", status_code=status.HTTP_200_OK)
 @limiter.limit("5/minute")
 async def root(request: Request, response: Response):  # noqa: ARG001
+    """
+    Root endpoint for the API.
+
+    Returns a simple message indicating the API is live.
+
+    Args:
+        request (Request): The incoming HTTP request.
+        response (Response): The outgoing HTTP response.
+
+    Returns:
+        dict: A message indicating the API is live.
+    """
     return {"message": "The API is LIVE!!"}
 
 
 @app.get("/health", status_code=status.HTTP_200_OK)
 async def health():
+    """
+    Health check endpoint for the API.
+
+    Increments a custom metric and returns a message indicating the API is live.
+
+    Returns:
+        dict: A message indicating the API is live.
+    """
     work_counter = meter.create_counter(
         name="health_call_counter",
         unit="1",
