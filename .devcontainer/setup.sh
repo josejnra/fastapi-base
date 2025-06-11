@@ -4,8 +4,9 @@ sudo apt update
 sudo apt install -y graphviz xdg-utils
 
 poetry install
-
 poetry update
+poetry self add poetry-plugin-shell
+poetry self add poetry-plugin-export
 
 git config --local core.editor "vi"
 
