@@ -1,6 +1,68 @@
 ## FastAPI Base project
 
-### Run Locally
+## Architecture
+
+<p align="center">
+  <img src="./system-architecture.svg" alt="System Architecture">
+</p>
+
+### Technology Stack
+- **Framework**: FastAPI (Python 3.12+)
+- **Database**: PostgreSQL (AsyncPG, SQLModel, SQLAlchemy)
+- **Cache**: Redis
+- **Observability**: OpenTelemetry (OTel Collector, Loki, Tempo, Prometheus, Grafana)
+- **Package Manager**: Poetry
+
+### Project Structure
+- `app/api`: API route definitions.
+- `app/core`: Core configuration, database connection, security, logging.
+- `app/models`: Database models (SQLModel).
+- `app/schemas`: Pydantic schemas for request/response validation.
+- `observability`: Configuration for the observability stack.
+- `tests`: Pytest suite.
+
+### Configuration
+The application uses `pydantic-settings` for configuration. Environment variables can be set in a `.env` file (see `app/core/config.py`).
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `APP_DATABASE_URL` | Async database connection string | `sqlite+aiosqlite:///:memory:` |
+| `APP_LOG_LEVEL` | Logging level | `TRACE` |
+| `APP_REDIS_URL` | Redis connection URL | `redis://@localhost:6379/0` |
+| `APP_OTEL_COLLECTOR_URL` | OpenTelemetry Collector URL | `otel_collector` |
+| `APP_SECRET_KEY` | JWT Secret Key | *Generated* |
+| `APP_ALGORITHM` | JWT Algorithm | `HS256` |
+
+### Local Development
+This project uses `poetry` for dependency management and `taskipy` for running common tasks.
+
+1. **Install Dependencies**:
+   ```shell
+   poetry install
+   ```
+2. **Run Server (Dev)**:
+   ```shell
+   poetry run task run
+   ```
+   The app will be available at [http://localhost:8000](http://localhost:8000).
+
+3. **Run Tests**:
+   ```shell
+   poetry run task test
+   ```
+
+4. **Lint & Format**:
+   ```shell
+   poetry run task lint
+   poetry run task format
+   ```
+
+### API Documentation
+Once the application is running, you can access the interactive API documentation:
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+### Run with Docker
 To easily run this application locally it's recommended to use the [remote container extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) for vscode. Then, just run:
 ```shell
 docker-compose up -d
